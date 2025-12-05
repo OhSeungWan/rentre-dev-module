@@ -1,0 +1,53 @@
+# Dev Backlog Workflow Configuration
+name: dev-backlog
+description: "Dev 에이전트가 PM의 서브태스크를 실제 코드로 구현하는 워크플로우"
+author: "Rentre-Dev"
+version: "1.0.0"
+
+# Configuration Sources
+config_source: "{project-root}/.bmad/rentre-dev/config.yaml"
+communication_language: "{config_source}:communication_language"
+user_name: "{config_source}:user_name"
+auto_sync: "{config_source}:auto_sync"
+date: system-generated
+
+# Path Definitions
+installed_path: "{project-root}/.bmad/rentre-dev/workflows/dev-backlog"
+module_path: "{project-root}/.bmad/rentre-dev"
+data_path: "{module_path}/data/backlogs"
+guides_path: "{module_path}/guides"
+
+# Workflow Settings
+template: false
+instructions: "{installed_path}/instructions.md"
+standalone: true
+web_bundle: true
+
+# Step Configuration
+steps:
+  - step-01-init
+  - step-02-select
+  - step-03-context
+  - step-04-implement
+  - step-05-verify
+  - step-06-complete
+
+# Memory Configuration
+memory:
+  type: sidecar-file
+  location: "{data_path}/{backlog_id}/session-state.yaml"
+
+# MCP Integrations
+mcp_tools:
+  required: []
+  optional:
+    - figma-dev-mode-mcp-server
+    - context7
+    - playwright
+    - serena
+
+# Features
+features:
+  sub_agent_mode: true
+  vitest_testing: true
+  parallel_execution: true

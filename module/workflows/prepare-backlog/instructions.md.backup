@@ -1,0 +1,617 @@
+# Prepare Backlog - 백로그 분석 및 준비 워크플로우
+
+<critical>The workflow execution engine is governed by: {project-root}/.bmad/core/tasks/workflow.xml</critical>
+<critical>You MUST have already loaded and processed: {project-root}/.bmad/rentre-dev/workflows/prepare-backlog/workflow.yaml</critical>
+<critical>Communicate all responses in {communication_language}</critical>
+<critical>This workflow prepares a backlog for decomposition by analyzing it comprehensively and collecting context</critical>
+
+<workflow>
+
+<step n="1" goal="백로그 입력 및 기본 정보 수집">
+
+<check if="invoked from another workflow with backlog_content">
+  <action>전달받은 파라미터 확인:
+  - backlog_source: {backlog_source}
+  - backlog_content: {backlog_content}
+  - skip_save: {skip_save}
+  </action>
+  <goto step="2">백로그 내용 있음, 분석 진행</goto>
+</check>
+
+<ask>분석할 백로그를 제공해 주세요.
+
+**입력 방식 선택:**
+
+1. 노션 URL 입력 (auto 모드에서 직접 로드)
+2. 백로그 내용 직접 붙여넣기
+3. 노션에서 백로그 검색</ask>
+
+<check if="option 1 - Notion URL">
+  <check if="notion_integration == auto">
+    <action>Extract page ID from URL</action>
+    <action>Use Notion MCP to retrieve page:
+    - GET /pages/{page_id}
+    - Extract title, properties, content
+    - Identify backlog type from "Type" property
+    </action>
+    <action>Store notion_page_id for later reference</action>
+  </check>
+  <check if="notion_integration != auto">
+    <action>Inform: "노션 MCP 연동이 필요합니다. 내용을 직접 붙여넣어 주세요."</action>
+    <goto step="1">Re-ask for input</goto>
+  </check>
+</check>
+
+<check if="option 2 - Direct paste">
+  <ask>백로그 내용을 붙여넣어 주세요:
+
+- 제목
+- 유형 (Epic/Story/Task/Bug 등)
+- 설명/요구사항
+- 수용 기준 (있다면)
+- 상위 백로그 정보 (있다면)
+- 연결된 백로그 (있다면)</ask>
+  </check>
+
+<check if="option 3 - Search">
+  <action>Use Notion MCP to search:
+  - POST /search with user's query
+  - Display matching backlogs with type and status
+  - Let user select one
+  </action>
+</check>
+
+<action>백로그 기본 정보 파싱 및 저장:
+
+```yaml
+backlog_id: { notion_page_id OR auto-generated YYYYMMDD-HHMMSS }
+title: { backlog_title }
+type: { backlog_type } # Epic, Story, Task, Bug, etc.
+status: { current_status }
+notion_id: { notion_page_id } # if from Notion
+description: { raw_description }
+acceptance_criteria_raw: { raw_acceptance_criteria }
+```
+
+</action>
+
+<template-output>backlog_basic_info</template-output>
+</step>
+
+<step n="2" goal="상위/하위/연결 백로그 종합 분석">
+<critical>백로그를 고립된 단위가 아닌 전체 컨텍스트에서 이해합니다.</critical>
+
+<action>상위 백로그 정보 수집:
+
+**2.1 상위 백로그 탐색:**
+
+<check if="notion_integration == auto AND notion_id exists">
+  <action>노션에서 Parent 관계 속성 조회</action>
+  <action>상위 백로그가 있으면 기본 정보 로드:
+  - 상위 백로그 제목, 유형, 설명 요약
+  - 상위 백로그의 전체 요구사항 범위
+  - 상위 백로그의 수용 기준
+  </action>
+</check>
+
+<check if="no parent found OR manual input">
+  <ask>상위 백로그 정보가 있나요?
+
+- [y] 예 - 상위 백로그 정보 입력
+- [n] 아니오 - 최상위 백로그임</ask>
+  <check if="y">
+  <ask>상위 백로그 정보를 입력해 주세요:
+- 제목
+- 유형
+- 핵심 요구사항 요약</ask>
+  </check>
+  </check>
+  </action>
+
+<action>하위 백로그 정보 수집:
+
+**2.2 기존 하위 백로그 탐색:**
+
+<check if="notion_integration == auto AND notion_id exists">
+  <action>노션에서 Children 관계 속성 조회</action>
+  <action>기존 하위 백로그가 있으면 목록 로드:
+  - 각 하위 백로그의 제목, 유형, 상태
+  - 이미 완료된 항목 표시
+  - 진행 중인 항목 표시
+  </action>
+</check>
+
+<check if="children found">
+  <action>기존 하위 백로그 요약 표시:
+
+"**기존 하위 백로그 ({child_count}개):**
+
+| #   | 유형 | 제목 | 상태 |
+| --- | ---- | ---- | ---- |
+
+{children_table}
+
+⚠️ 기존 하위 백로그가 있습니다. 추가 분해 시 중복에 주의하세요."
+</action>
+</check>
+</action>
+
+<action>연결된 백로그 정보 수집:
+
+**2.3 연결된 백로그 탐색:**
+
+<check if="notion_integration == auto">
+  <action>노션에서 관계 속성들 조회:
+  - Blocks / Blocked By (차단 관계)
+  - Related (연관 관계)
+  - Dependencies (의존 관계)
+  </action>
+</check>
+
+<check if="related backlogs found">
+  <action>연결 관계 표시:
+
+"**연결된 백로그:**
+
+- **차단됨:** {blocking_items}
+- **차단 중:** {blocked_by_items}
+- **연관:** {related_items}
+- **의존:** {dependency_items}"
+  </action>
+  </check>
+  </action>
+
+<action>종합 컨텍스트 요약 생성:
+
+"**📊 백로그 컨텍스트 분석 완료**
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+**현재 백로그:**
+
+- {backlog_type}: {backlog_title}
+
+**계층 구조:**
+
+```
+{parent_title} ({parent_type})  ← 상위
+└── {backlog_title} ({backlog_type})  ← 현재
+    └── {existing_children_summary}  ← 기존 하위
+```
+
+**연결 관계:**
+{connection_summary}
+
+━━━━━━━━━━━━━━━━━━━━━━━"
+</action>
+
+<template-output>context_analysis</template-output>
+</step>
+
+<step n="3" goal="요구사항 및 수용기준 구조화">
+<critical>상위 백로그 정보를 포함하여 요구사항을 완전하게 구조화합니다.</critical>
+
+<action>요구사항 추출 및 번호 부여:
+
+**3.1 요구사항 파싱:**
+
+상위 백로그와 현재 백로그의 설명에서 개별 요구사항을 추출하고 REQ-XXX 형식으로 번호 부여:
+
+```yaml
+requirements:
+  - id: REQ-001
+    content: '{첫 번째 요구사항}'
+    type: functional | non-functional | technical | business
+    source: current | parent | inferred
+    priority: high | medium | low
+
+  - id: REQ-002
+    content: '{두 번째 요구사항}'
+    type: functional
+    source: current
+    priority: medium
+```
+
+**추출 기준:**
+
+- 기능적 요구사항 (사용자가 할 수 있어야 하는 것)
+- 비기능적 요구사항 (성능, 보안, 접근성 등)
+- 기술적 제약사항 (특정 기술 사용, API 호환성 등)
+- 비즈니스 규칙 (정책, 제한 등)
+  </action>
+
+<action>수용 기준 추출 및 번호 부여:
+
+**3.2 수용 기준 파싱:**
+
+```yaml
+acceptance_criteria:
+  - id: AC-001
+    content: '{첫 번째 수용 기준}'
+    testable: true
+    related_requirements: [REQ-001, REQ-002]
+
+  - id: AC-002
+    content: '{두 번째 수용 기준}'
+    testable: true
+    related_requirements: [REQ-003]
+```
+
+수용 기준이 명시적으로 없는 경우:
+
+- 요구사항에서 암묵적 수용 기준 도출
+- [INFERRED] 태그 추가
+  </action>
+
+<action>구조화된 요구사항 표시:
+
+"**📋 요구사항 구조화 완료**
+
+**요구사항 ({req_count}개):**
+
+| ID  | 내용 | 유형 | 출처 | 우선순위 |
+| --- | ---- | ---- | ---- | -------- |
+
+{requirements_table}
+
+**수용 기준 ({ac_count}개):**
+
+| ID  | 내용 | 테스트 가능 | 관련 요구사항 |
+| --- | ---- | ----------- | ------------- |
+
+{acceptance_criteria_table}
+"
+</action>
+
+<ask>요구사항 분석이 정확한가요?
+
+1. 정확함 - 계속 진행
+2. 수정 필요 - 요구사항/수용기준 수정
+3. 추가 필요 - 누락된 항목 추가</ask>
+
+<check if="option 2 OR option 3">
+  <ask>수정/추가할 내용을 알려주세요:</ask>
+  <action>요구사항/수용기준 업데이트</action>
+</check>
+
+<template-output>requirements_structured</template-output>
+</step>
+
+<step n="4" goal="추가 컨텍스트 수집 (피그마, 참조 문서 등)">
+<critical>구현에 필요한 모든 컨텍스트를 수집합니다.</critical>
+
+<action>피그마 링크 감지 및 정보 추출:
+
+**4.1 피그마 링크 파싱:**
+
+백로그 내용에서 다음 패턴 검색:
+
+- `https://www.figma.com/file/{file_key}...`
+- `https://www.figma.com/design/{file_key}...`
+- `node-id={node_id}` 또는 `?node-id={node_id}`
+- 직접 노드 ID: `{number}:{number}` 형식
+
+<check if="figma links found">
+  <action>피그마 정보 추출 및 저장:
+
+```yaml
+figma:
+  url: { full_figma_url }
+  file_key: { extracted_file_key }
+  node_id: { extracted_node_id }
+  detected_in: description | acceptance_criteria | comment
+```
+
+  </action>
+
+<action>피그마 정보 표시:
+
+"**🎨 피그마 디자인 감지됨:**
+
+- URL: {figma_url}
+- 파일 키: {file_key}
+- 노드 ID: {node_id}
+
+→ 이 정보는 하위 백로그에 자동 전파됩니다."
+</action>
+</check>
+</action>
+
+<action>참조 문서 및 링크 수집:
+
+**4.2 참조 문서 파싱:**
+
+백로그 내용에서 참조 링크 검색:
+
+- API 문서 링크
+- 기술 스펙 문서
+- 외부 서비스 문서
+- 내부 위키/문서
+
+```yaml
+references:
+  - type: api_doc
+    url: { url }
+    title: { title }
+
+  - type: external_service
+    url: { url }
+    title: { title }
+```
+
+</action>
+
+<action>불명확한 항목 식별:
+
+**4.3 불명확/모호한 부분 체크:**
+
+요구사항과 수용기준에서 불명확한 부분 식별:
+
+- "적절한", "빠른", "좋은" 등 모호한 표현
+- 구체적 수치가 없는 성능 요구사항
+- 정의되지 않은 용어나 개념
+- 암묵적인 가정
+
+<check if="unclear items found">
+```yaml
+unclear_items:
+  - item: REQ-003
+    issue: "적절한 응답 시간"이 구체적이지 않음
+    suggestion: 구체적인 ms 단위 지정 필요
+
+- item: AC-002
+  issue: "사용자 친화적" 정의 필요
+  suggestion: 구체적인 UX 기준 명시 필요
+
+````
+</check>
+</action>
+
+<check if="unclear_items exist">
+  <action>불명확한 항목 표시:
+
+"**⚠️ 불명확한 항목 발견:**
+
+| 항목 | 이슈 | 제안 |
+|-----|------|------|
+{unclear_items_table}
+
+이 항목들은 분해 전에 명확히 하는 것이 좋습니다."
+  </action>
+
+  <ask>불명확한 항목을 어떻게 처리할까요?
+
+- [c] 명확화 - 지금 바로 명확하게 정의
+- [l] 나중에 - 분해 과정에서 처리
+- [s] 건너뛰기 - 현재 상태로 진행</ask>
+
+  <check if="c">
+    <ask>각 불명확한 항목에 대한 명확한 정의를 입력해 주세요:</ask>
+    <action>요구사항/수용기준 업데이트</action>
+  </check>
+</check>
+
+<action>컨텍스트 요약 생성:
+
+```yaml
+context_notes:
+  figma: {figma_info}
+  references: {references_list}
+  unclear_items: {unclear_items_list}
+  parent_context: {parent_summary}
+  existing_children: {children_summary}
+  connections: {connections_summary}
+````
+
+</action>
+
+<template-output>context_collected</template-output>
+</step>
+
+<step n="5" goal="컨텍스트 충족도 검증 및 부족한 정보 수집">
+<critical>분해에 필요한 필수 컨텍스트가 충분한지 검증하고, 부족한 경우 적극적으로 요청합니다.</critical>
+
+<action>gather-context 태스크 실행: {gather_context_task}
+
+**전달할 파라미터:**
+
+- backlog_type: {backlog_type}
+- backlog_title: {backlog_title}
+- backlog_description: {raw_description}
+- requirements: {requirements}
+- acceptance_criteria: {acceptance_criteria}
+- existing_context: - figma: {figma_info} - references: {references_list} - parent_info: {parent_summary}
+  </action>
+
+<invoke-task path="{gather_context_task}">
+  <param name="backlog_type">{backlog_type}</param>
+  <param name="backlog_title">{backlog_title}</param>
+  <param name="requirements">{requirements}</param>
+  <param name="acceptance_criteria">{acceptance_criteria}</param>
+  <param name="existing_context">{context_notes}</param>
+</invoke-task>
+
+<action>태스크 결과 저장:
+
+- context_score: {context_score}
+- can_decompose: {can_decompose}
+- missing_required: {missing_required}
+- missing_recommended: {missing_recommended}
+- gathered_context: {gathered_context}
+  </action>
+
+<check if="context_score < 50">
+  <action>경고 표시:
+
+"**⚠️ 컨텍스트 충족도 낮음: {context_score}%**
+
+필수 정보가 많이 부족합니다. 분해 전에 추가 정보 수집을 강력히 권장합니다."
+</action>
+</check>
+
+<check if="context_score >= 50 AND context_score < 80">
+  <action>알림 표시:
+
+"**ℹ️ 컨텍스트 충족도: {context_score}%**
+
+일부 정보가 부족하지만 분해는 가능합니다. 가정이 필요할 수 있습니다."
+</action>
+</check>
+
+<check if="context_score >= 80">
+  <action>확인 표시:
+
+"**✅ 컨텍스트 충족도: {context_score}%**
+
+분해에 필요한 정보가 충분히 수집되었습니다."
+</action>
+</check>
+
+<check if="gathered_context exists">
+  <action>수집된 추가 컨텍스트를 context_notes에 병합</action>
+</check>
+
+<template-output>context_verified</template-output>
+</step>
+
+<step n="6" goal="백로그 정보 저장">
+
+<check if="skip_save == true">
+  <action>저장 건너뛰기 - 호출 워크플로우에서 처리</action>
+  <goto step="7">Return results</goto>
+</check>
+
+<action>저장 폴더 경로 결정: {output_folder}/{backlog_id}/</action>
+
+<action>백로그 폴더 생성</action>
+
+<action>backlog-info.yaml 저장:
+
+```yaml
+# 백로그 메타정보 - Prepared by prepare-backlog workflow
+backlog_id: { backlog_id }
+title: { backlog_title }
+type: { backlog_type }
+status: prepared
+notion_id: { notion_page_id }
+created_at: { date }
+prepared_at: { date }
+
+# 계층 정보
+hierarchy:
+  parent:
+    id: { parent_id }
+    title: { parent_title }
+    type: { parent_type }
+    notion_id: { parent_notion_id }
+  existing_children:
+    count: { children_count }
+    items: { children_list }
+  connections:
+    blocking: { blocking_list }
+    blocked_by: { blocked_by_list }
+    related: { related_list }
+
+# 📋 구조화된 요구사항
+requirements: { requirements_yaml }
+
+# ✅ 구조화된 수용 기준
+acceptance_criteria: { acceptance_criteria_yaml }
+
+# 🎨 컨텍스트
+context:
+  figma:
+    url: { figma_url }
+    file_key: { figma_file_key }
+    node_id: { figma_node_id }
+  references: { references_yaml }
+  unclear_items: { unclear_items_yaml }
+
+# 원본 데이터
+raw:
+  description: |
+    {raw_description}
+  acceptance_criteria: |
+    {raw_acceptance_criteria}
+```
+
+</action>
+
+<action>저장 완료 메시지:
+
+"✅ 백로그 정보 저장 완료
+
+- 위치: {output_folder}/{backlog_id}/
+- 파일: backlog-info.yaml"
+  </action>
+
+<template-output>backlog_saved</template-output>
+</step>
+
+<step n="7" goal="완료 및 다음 단계 안내">
+
+<action>준비 완료 요약 표시:
+
+"**✅ 백로그 준비 완료!**
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+**백로그:** {backlog_type} - {backlog_title}
+
+**분석 결과:**
+
+- 요구사항: {req_count}개 (REQ-001 ~ REQ-{req_count})
+- 수용 기준: {ac_count}개 (AC-001 ~ AC-{ac_count})
+- 불명확 항목: {unclear_count}개
+- 컨텍스트 충족도: {context_score}%
+
+**컨텍스트:**
+
+- 상위 백로그: {parent_summary}
+- 기존 하위: {children_count}개
+- 피그마: {figma_status}
+- 참조 문서: {ref_count}개
+
+**저장 위치:** {output_folder}/{backlog_id}/
+
+━━━━━━━━━━━━━━━━━━━━━━━"
+</action>
+
+<check if="invoked from another workflow">
+  <action>결과값 반환:
+  - backlog_id: {backlog_id}
+  - backlog_info: {backlog_info_yaml}
+  - requirements: {requirements}
+  - acceptance_criteria: {acceptance_criteria}
+  - context_notes: {context_notes}
+  - context_score: {context_score}
+  - backlog_folder: {output_folder}/{backlog_id}
+  </action>
+  <action>호출 워크플로우로 제어 반환</action>
+</check>
+
+<check if="standalone execution">
+  <ask>다음 작업을 선택해 주세요:
+
+1. 코드베이스 분석 진행 (\*analyze-code)
+2. 백로그 분해 진행 (\*decompose)
+3. 다른 백로그 준비
+4. 완료</ask>
+
+  <check if="option 1">
+    <action>analyze-codebase 워크플로우 안내</action>
+  </check>
+
+  <check if="option 2">
+    <action>decompose-backlog 워크플로우 안내</action>
+  </check>
+
+  <check if="option 3">
+    <goto step="1">Prepare another backlog</goto>
+  </check>
+</check>
+
+<template-output>completion_summary</template-output>
+</step>
+
+</workflow>

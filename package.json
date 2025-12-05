@@ -1,0 +1,36 @@
+{
+  "name": "rentre-dev-module",
+  "version": "1.0.0",
+  "description": "BMAD 확장 모듈 - 노션 백로그 관리 및 개발 워크플로우 자동화",
+  "main": "lib/installer.js",
+  "bin": {
+    "rentre-dev": "./bin/cli.js"
+  },
+  "scripts": {
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "bmad",
+    "bmad-method",
+    "notion",
+    "backlog",
+    "workflow",
+    "ai-agent"
+  ],
+  "author": "oseung-wan",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "fs-extra": "^11.0.0",
+    "inquirer": "^8.2.6",
+    "js-yaml": "^4.1.0",
+    "ora": "^5.4.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oseung-wan/rentre-dev-module.git"
+  }
+}

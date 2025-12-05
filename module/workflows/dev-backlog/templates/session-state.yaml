@@ -1,0 +1,30 @@
+# Dev Backlog Session State Template
+# This file tracks workflow progress across sessions
+
+# Backlog Information
+backlog_id: ""
+backlog_title: ""
+
+# Progress Tracking
+current_subtask: 1
+completed_subtasks: []
+total_subtasks: 0
+
+# Timestamps
+started_at: ""
+last_updated: ""
+last_completed: ""
+
+# Session Metadata
+forced_completions: []
+skipped_subtasks: []
+
+# MCP Status (set during init)
+mcp_status:
+  figma: false
+  context7: false
+  playwright: false
+  serena: false
+
+# Implementation Notes
+notes: []

@@ -1,0 +1,412 @@
+# Analyze Codebase - 코드베이스 분석 워크플로우
+
+<critical>The workflow execution engine is governed by: {project-root}/.bmad/core/tasks/workflow.xml</critical>
+<critical>Communicate in {communication_language} throughout</critical>
+<critical>This workflow can be invoked standalone OR from other workflows (decompose-backlog, start-task)</critical>
+
+<workflow>
+
+<step n="1" goal="백로그 정보 확인 및 기존 분석 체크">
+
+<check if="invoked from another workflow">
+  <action>전달받은 파라미터 확인:
+  - backlog_id: {backlog_id}
+  - backlog_content: {backlog_content}
+  - backlog_folder: {backlog_folder}
+  - analysis_depth: {analysis_depth} (없으면 기본값 사용)
+  - force_new: {force_new} (없으면 false)
+  </action>
+</check>
+
+<check if="standalone execution">
+  <ask>분석할 백로그 정보를 입력해주세요:
+
+**입력 방식:**
+
+1. 기존 백로그 폴더 경로 입력 (예: data/backlogs/12345, data/tasks/12345)
+2. 새 백로그 내용 직접 입력</ask>
+
+  <check if="option 1 - existing folder">
+    <action>백로그 폴더에서 backlog-info.yaml 로드</action>
+    <action>백로그 ID 및 내용 추출</action>
+  </check>
+
+  <check if="option 2 - new backlog">
+    <ask>백로그 내용을 입력해주세요:
+- 제목
+- 설명/요구사항
+- 관련 키워드 (있다면)</ask>
+    <action>백로그 ID 자동 생성: {YYYYMMDD}-{HHMMSS}</action>
+    <ask>분석 결과를 저장할 폴더를 선택해주세요:
+- [b] backlogs 폴더 ({backlogs_folder})
+- [t] tasks 폴더 ({tasks_folder})
+- [c] 커스텀 경로 입력</ask>
+  </check>
+</check>
+
+<action>기존 분석 결과 확인: {backlog_folder}/{analysis_filename}</action>
+
+<check if="existing analysis found AND force_new != true">
+  <action>기존 분석 정보 표시:
+
+**기존 코드 분석 발견:**
+
+- 위치: {backlog_folder}/{analysis_filename}
+- 생성일: {analysis_created_date}
+- 분석 깊이: {previous_analysis_depth}
+- 분석된 파일 수: {previous_file_count}개
+  </action>
+
+  <ask>기존 분석을 어떻게 처리할까요?
+
+- [r] 재사용 - 기존 분석 결과 그대로 사용
+- [u] 업데이트 - 기존 분석에 추가 분석 병합
+- [n] 새로 분석 - 기존 분석 무시하고 처음부터</ask>
+
+    <check if="response == 'r'">
+      <action>기존 분석 결과를 {code_analysis} 변수에 로드</action>
+      <action>분석 결과 요약 표시</action>
+      <goto step="5">Complete with existing analysis</goto>
+    </check>
+
+    <check if="response == 'u'">
+      <action>기존 분석 결과를 {existing_analysis} 변수에 로드</action>
+      <action>업데이트 모드로 진행</action>
+    </check>
+  </check>
+
+<check if="no existing analysis OR force_new == true">
+  <action>새 분석 진행</action>
+</check>
+
+<template-output>analysis_setup</template-output>
+</step>
+
+<step n="2" goal="분석 깊이 및 범위 선택">
+
+<check if="analysis_depth not provided">
+  <ask>코드베이스 분석 깊이를 선택해주세요:
+
+| 옵션                  | 설명                                     | 예상 파일 수                 | 소요 시간 |
+| --------------------- | ---------------------------------------- | ---------------------------- | --------- |
+| **[q] quick**         | 빠른 탐색 - 키워드 검색, 파일 목록       | ~{max_files_quick}개         | ~1분      |
+| **[s] standard**      | 표준 분석 - + 의존성 맵, 아키텍처 패턴   | ~{max_files_standard}개      | ~3분      |
+| **[d] deep**          | 심층 분석 - + 함수/클래스 레벨 분석      | ~{max_files_deep}개          | ~5분      |
+| **[c] comprehensive** | 종합 분석 - + 테스트 범위, 리팩토링 제안 | ~{max_files_comprehensive}개 | ~10분     |
+
+(기본값: {default_depth})</ask>
+
+<action>선택된 깊이를 {analysis_depth}에 저장</action>
+</check>
+
+<action>분석 깊이에 따른 설정 적용:
+
+**{analysis_depth} 모드 설정:**
+
+- 최대 파일 수: {max_files_for_depth}
+- 의존성 분석: {include_deps_for_depth}
+- 테스트 분석: {include_tests_for_depth}
+- 함수 레벨 분석: {include_function_level}
+- 리팩토링 제안: {include_refactoring}
+  </action>
+
+<ask>분석 범위를 선택해주세요:
+
+- [a] 자동 탐색 (키워드 기반 전체 탐색) - 권장
+- [p] 경로 지정 (특정 경로만 분석)
+- [b] 둘 다 (자동 탐색 + 특정 경로)</ask>
+
+<check if="response == 'p' OR response == 'b'">
+  <ask>분석할 경로를 입력해주세요 (쉼표로 구분):
+예: src/features/user, src/components, src/api</ask>
+  <action>입력된 경로를 {custom_paths}에 저장</action>
+</check>
+
+<template-output>analysis_config</template-output>
+</step>
+
+<step n="3" goal="코드베이스 분석 수행">
+
+<action>백로그에서 핵심 키워드 추출:
+
+**키워드 추출 소스:**
+
+- 백로그 제목
+- 설명/요구사항
+- 수용 기준
+- 기술적 언급 (API, 컴포넌트, 서비스 등)
+
+**추출된 키워드:** {extracted_keywords}
+</action>
+
+<action>프로젝트 기술 스택 파악:
+
+- package.json / requirements.txt / go.mod 등 확인
+- 프레임워크 감지 (React, Vue, Next.js, NestJS 등)
+- 주요 라이브러리 식별
+  </action>
+
+<action>키워드로 관련 파일 검색 (Grep, Glob, SERENA MCP 활용):
+
+**검색 전략:**
+
+1. 파일명 매칭: {keywords}를 포함하는 파일
+2. 내용 매칭: {keywords}를 포함하는 코드
+3. import/require 추적: 관련 모듈 의존성
+   </action>
+
+<check if="analysis_depth == 'quick'">
+  <action>Quick 분석 수행:
+  - 관련 파일 목록 생성 (최대 {max_files_quick}개)
+  - 각 파일의 간단한 역할 설명
+  - 기본 디렉토리 구조 파악
+  </action>
+</check>
+
+<check if="analysis_depth == 'standard'">
+  <action>Standard 분석 수행:
+  - 관련 파일 목록 생성 (최대 {max_files_standard}개)
+  - 각 파일의 역할 및 책임 분석
+  - 파일 간 의존성 맵 생성
+  - 아키텍처 패턴 식별 (MVC, 클린 아키텍처, 레이어드 등)
+  - 네이밍 컨벤션 파악
+  </action>
+</check>
+
+<check if="analysis_depth == 'deep'">
+  <action>Deep 분석 수행:
+  - 관련 파일 목록 생성 (최대 {max_files_deep}개)
+  - Standard 분석 내용 포함
+  - 주요 함수/클래스/메서드 레벨 분석
+  - 호출 흐름 (call flow) 파악
+  - 데이터 흐름 추적
+  - 에러 핸들링 패턴 분석
+  </action>
+</check>
+
+<check if="analysis_depth == 'comprehensive'">
+  <action>Comprehensive 분석 수행:
+  - 관련 파일 목록 생성 (최대 {max_files_comprehensive}개)
+  - Deep 분석 내용 포함
+  - 관련 테스트 파일 분석
+  - 테스트 커버리지 예상
+  - 코드 품질 이슈 식별
+  - 리팩토링 기회 제안
+  - 기술 부채 식별
+  </action>
+</check>
+
+<check if="existing_analysis exists (update mode)">
+  <action>기존 분석과 새 분석 병합:
+  - 새로 발견된 파일 추가
+  - 변경된 파일 업데이트
+  - 삭제된 파일 제거
+  - 의존성 맵 갱신
+  </action>
+</check>
+
+<template-output>analysis_in_progress</template-output>
+</step>
+
+<step n="4" goal="분석 결과 정리 및 저장">
+
+<action>분석 결과를 표준 형식으로 정리:
+
+```markdown
+# 코드베이스 분석 결과
+
+**백로그:** {backlog_title}
+**분석일:** {date}
+**분석 깊이:** {analysis_depth}
+**분석된 파일:** {file_count}개
+
+---
+
+## 1. 기술 스택
+
+| 카테고리        | 기술                   |
+| --------------- | ---------------------- |
+| 언어            | {languages}            |
+| 프레임워크      | {frameworks}           |
+| 주요 라이브러리 | {libraries}            |
+| 아키텍처 패턴   | {architecture_pattern} |
+
+## 2. 관련 파일 목록
+
+| #   | 파일 경로     | 역할     | 수정 필요  | 우선순위     |
+| --- | ------------- | -------- | ---------- | ------------ |
+| 1   | {file_path_1} | {role_1} | {modify_1} | {priority_1} |
+| 2   | {file_path_2} | {role_2} | {modify_2} | {priority_2} |
+| ... | ...           | ...      | ...        | ...          |
+
+## 3. 의존성 맵
+```
+
+{dependency_diagram}
+
+```
+
+**주요 의존 관계:**
+- {file_a} → {file_b}: {relationship_description}
+- ...
+
+## 4. 아키텍처 분석
+
+### 현재 구조
+{current_architecture_description}
+
+### 관련 레이어/모듈
+- **{layer_1}**: {layer_1_description}
+- **{layer_2}**: {layer_2_description}
+
+## 5. 구현 시 주의사항
+
+### 기존 패턴 준수
+- {pattern_1}: {pattern_1_description}
+- {pattern_2}: {pattern_2_description}
+
+### 잠재적 충돌 영역
+- {conflict_area_1}
+- {conflict_area_2}
+
+### 테스트 필요 범위
+- {test_scope_1}
+- {test_scope_2}
+
+<check if="analysis_depth == 'deep' OR analysis_depth == 'comprehensive'">
+## 6. 상세 분석
+
+### 주요 함수/클래스
+| 이름 | 위치 | 역할 | 수정 가능성 |
+|------|------|------|------------|
+| {symbol_1} | {location_1} | {role_1} | {modify_likelihood_1} |
+| ... | ... | ... | ... |
+
+### 호출 흐름
+```
+
+{call_flow_diagram}
+
+```
+</check>
+
+<check if="analysis_depth == 'comprehensive'">
+## 7. 품질 및 개선 제안
+
+### 테스트 현황
+- 관련 테스트 파일: {test_files_count}개
+- 예상 커버리지: {estimated_coverage}%
+
+### 리팩토링 기회
+- {refactoring_opportunity_1}
+- {refactoring_opportunity_2}
+
+### 기술 부채
+- {tech_debt_1}
+- {tech_debt_2}
+</check>
+
+---
+
+## Dev 에이전트 참고사항
+
+**작업 시작 전 확인:**
+1. {checklist_item_1}
+2. {checklist_item_2}
+3. {checklist_item_3}
+
+**권장 작업 순서:**
+1. {recommended_order_1}
+2. {recommended_order_2}
+3. {recommended_order_3}
+
+**참조할 기존 구현:**
+- {reference_implementation_1}
+- {reference_implementation_2}
+```
+
+</action>
+
+<action>분석 결과 저장: {backlog_folder}/{analysis_filename}</action>
+
+<action>backlog-info.yaml 업데이트 (code_context 섹션 추가/갱신):
+
+```yaml
+code_context:
+  analysis_date: { date }
+  analysis_depth: { analysis_depth }
+  file_count: { file_count }
+  target_files:
+    - { file_1 }
+    - { file_2 }
+  architecture_pattern: { architecture_pattern }
+  tech_stack:
+    languages: [{ languages }]
+    frameworks: [{ frameworks }]
+  implementation_notes:
+    - { note_1 }
+    - { note_2 }
+```
+
+</action>
+
+<template-output>analysis_saved</template-output>
+</step>
+
+<step n="5" goal="분석 결과 요약 및 완료">
+
+<action>분석 결과 요약 표시:
+
+**✅ 코드베이스 분석 완료!**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**📊 분석 요약:**
+
+- 백로그: {backlog_title}
+- 분석 깊이: {analysis_depth}
+- 분석된 파일: {file_count}개
+- 수정 필요 파일: {modify_count}개
+
+**📁 저장 위치:**
+
+- {backlog_folder}/{analysis_filename}
+
+**🔑 핵심 발견사항:**
+
+1. {key_finding_1}
+2. {key_finding_2}
+3. {key_finding_3}
+
+**⚠️ 주요 주의사항:**
+
+- {main_caution_1}
+- {main_caution_2}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+</action>
+
+<check if="invoked from another workflow">
+  <action>분석 결과를 호출 워크플로우에 반환:
+  - {code_analysis}: 전체 분석 결과 (마크다운)
+  - {target_files}: 수정 필요 파일 목록
+  - {implementation_notes}: 구현 주의사항
+  - {analysis_path}: 저장된 파일 경로
+  </action>
+  <action>호출 워크플로우로 제어 반환</action>
+</check>
+
+<check if="standalone execution">
+  <ask>다음 작업을 선택해주세요:
+
+- [d] 분석 결과 상세 보기
+- [e] 분석 결과 수정/보완
+- [p] PM 에이전트로 돌아가기 (백로그 분해 진행)
+- [v] Dev 에이전트로 전환 (구현 시작)
+- [x] 완료</ask>
+      </check>
+
+<template-output>analysis_complete</template-output>
+</step>
+
+</workflow>

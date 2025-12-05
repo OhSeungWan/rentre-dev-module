@@ -1,0 +1,81 @@
+# Decompose Backlog Workflow Configuration
+name: decompose-backlog
+description: "계층적 백로그 분해 - 준비된 백로그를 가이드 기반으로 하위 유형으로 분해 (Epic→Story, Story→Task, Task→Subtask 등) + Dev handoff"
+author: "Rentre-Dev"
+
+# Config source for module settings
+config_source: "{project-root}/{bmad_folder}/rentre-dev/config.yaml"
+communication_language: "{config_source}:communication_language"
+user_name: "{config_source}:user_name"
+notion_integration: "{config_source}:notion_integration"
+default_detail_level: "{config_source}:subtask_detail_level" # 기본값, 런타임에 오버라이드 가능
+auto_sync: "{config_source}:auto_sync"
+default_save_location: "{config_source}:default_save_location"
+
+# 연관 워크플로우 참조
+prepare_backlog_workflow: "{project-root}/{bmad_folder}/rentre-dev/workflows/prepare-backlog/workflow.yaml"
+analyze_codebase_workflow: "{project-root}/{bmad_folder}/rentre-dev/workflows/analyze-codebase/workflow.yaml"
+
+# Module paths
+installed_path: "{project-root}/{bmad_folder}/rentre-dev/workflows/decompose-backlog"
+module_path: "{project-root}/{bmad_folder}/rentre-dev"
+
+# Step-file architecture
+workflow_md: "{installed_path}/workflow.md"
+steps_folder: "{installed_path}/steps"
+
+# Guide files - CRITICAL for hierarchy-aware decomposition
+guides_folder: "{module_path}/data/guides"
+hierarchy_guide: "{guides_folder}/hierarchy-map.md"
+summary_guide: "{guides_folder}/backlog-guide-summary.md"
+
+# Templates
+backlog_template: "{module_path}/templates/backlog-item-template.md"
+subtask_template: "{module_path}/templates/subtask-template.md"
+
+# This is an interactive workflow
+template: false
+
+# Output paths - 계층적 구조로 저장
+data_path: "{module_path}/data"
+output_folder: "{data_path}/backlogs"
+tasks_folder: "{data_path}/tasks"
+
+standalone: true
+
+# Runtime configurable options (can override config defaults)
+runtime_options:
+  detail_level:
+    description: "분해 강도 - 런타임에 선택 가능"
+    options:
+      - value: "high"
+        label: "고수준 - 큰 단위로 분해 (3-5개)"
+      - value: "standard"
+        label: "표준 - 중간 단위로 분해 (5-8개)"
+      - value: "detailed"
+        label: "상세 - 파일/메서드 수준으로 분해 (8-15개)"
+    default: "{default_detail_level}"
+
+# Prerequisites
+prerequisites:
+  - Guide files must exist in data/guides/ (run Navigator's *analyze-db first)
+  - notion_integration should be "auto" for direct Notion updates
+  - Backlog should be prepared (prepare-backlog workflow) for best results
+
+# Web bundle configuration
+web_bundle:
+  name: "decompose-backlog"
+  description: "계층적 백로그 분해 워크플로우"
+  author: "Rentre-Dev"
+  workflow_md: "{bmad_folder}/rentre-dev/workflows/decompose-backlog/workflow.md"
+  web_bundle_files:
+    - "{bmad_folder}/rentre-dev/workflows/decompose-backlog/workflow.md"
+    - "{bmad_folder}/rentre-dev/workflows/decompose-backlog/steps/step-01-load-guides.md"
+    - "{bmad_folder}/rentre-dev/workflows/decompose-backlog/steps/step-01b-continue.md"
+    - "{bmad_folder}/rentre-dev/workflows/decompose-backlog/steps/step-02-select-backlog.md"
+    - "{bmad_folder}/rentre-dev/workflows/decompose-backlog/steps/step-03-code-analysis.md"
+    - "{bmad_folder}/rentre-dev/workflows/decompose-backlog/steps/step-04-config.md"
+    - "{bmad_folder}/rentre-dev/workflows/decompose-backlog/steps/step-05-decompose.md"
+    - "{bmad_folder}/rentre-dev/workflows/decompose-backlog/steps/step-06-verify.md"
+    - "{bmad_folder}/rentre-dev/workflows/decompose-backlog/steps/step-07-save.md"
+    - "{bmad_folder}/rentre-dev/workflows/decompose-backlog/steps/step-08-complete.md"

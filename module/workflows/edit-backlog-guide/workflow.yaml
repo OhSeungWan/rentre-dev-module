@@ -1,0 +1,22 @@
+# Edit Backlog Guide Workflow Configuration
+name: edit-backlog-guide
+description: "백로그 가이드 문서를 사용자와 협력하여 편집"
+author: "Rentre-Dev"
+
+# Config source for module settings
+config_source: "{project-root}/.bmad/rentre-dev/config.yaml"
+communication_language: "{config_source}:communication_language"
+user_name: "{config_source}:user_name"
+
+# Module paths
+installed_path: "{project-root}/.bmad/rentre-dev/workflows/edit-backlog-guide"
+module_path: "{project-root}/.bmad/rentre-dev"
+
+# This is an interactive editing workflow
+template: false
+instructions: "{installed_path}/instructions.md"
+
+# Guide files location
+guides_folder: "{module_path}/data/guides"
+
+standalone: true

@@ -1,0 +1,442 @@
+# Decompose Backlog - 백로그 분해 워크플로우
+
+<critical>The workflow execution engine is governed by: {project-root}/.bmad/core/tasks/workflow.xml</critical>
+<critical>You MUST have already loaded and processed: {project-root}/.bmad/rentre-dev/workflows/decompose-backlog/workflow.yaml</critical>
+<critical>Communicate all responses in {communication_language}</critical>
+<critical>This workflow REQUIRES guide files - run Navigator's \*analyze-db first if guides don't exist</critical>
+
+<workflow>
+
+<step n="1" goal="가이드 파일 로드 및 사전 조건 확인">
+<action>가이드 파일 존재 확인: {guides_folder}
+
+- hierarchy-map.md (필수)
+- backlog-guide-summary.md (필수)
+- guide-\*.md (유형별 가이드)
+  </action>
+
+<check if="guide files not found">
+  <action>Inform user: "백로그 가이드 파일이 없습니다. Navigator 에이전트의 `*analyze-db` 명령으로 먼저 가이드를 생성해 주세요."</action>
+  <ask>Navigator 에이전트로 전환하시겠습니까? (y/n)</ask>
+  <check if="y">
+    <action>Load Navigator agent</action>
+  </check>
+  <action>Exit workflow</action>
+</check>
+
+<action>가이드 파일 로드:
+
+1. Load {hierarchy_guide} - 계층 구조 파악
+2. Load {summary_guide} - 전체 백로그 유형 및 관계
+3. 가용한 백로그 유형 및 분해 경로 파악
+   </action>
+
+<action>계층 구조 표시:
+
+"**백로그 계층 구조 로드 완료**
+
+{hierarchy_diagram}
+
+**사용 가능한 분해 경로:**
+
+- Epic → Story
+- Story → Task, Bug
+- Task → Subtask
+- ... (가이드에 따라)"
+  </action>
+
+<template-output>hierarchy_loaded</template-output>
+</step>
+
+<step n="2" goal="백로그 준비 상태 확인 또는 prepare-backlog 호출">
+<ask>분해할 백로그를 선택해 주세요:
+
+**입력 방식:**
+
+1. 이미 준비된 백로그 폴더 경로 (예: data/backlogs/12345)
+2. 새 백로그 입력 (prepare-backlog 자동 호출)
+3. 노션에서 백로그 검색</ask>
+
+<check if="option 1 - Prepared backlog folder">
+  <action>백로그 폴더에서 backlog-info.yaml 로드</action>
+  <action>준비된 데이터 확인:
+  - backlog_id, title, type
+  - requirements (REQ-XXX)
+  - acceptance_criteria (AC-XXX)
+  - context (figma, references)
+  </action>
+  <check if="backlog-info.yaml not found OR incomplete">
+    <action>Inform: "백로그가 준비되지 않았습니다. prepare-backlog를 먼저 실행합니다."</action>
+    <invoke-workflow path="{prepare_backlog_workflow}">
+      <param name="backlog_source">folder</param>
+      <param name="skip_save">true</param>
+    </invoke-workflow>
+  </check>
+</check>
+
+<check if="option 2 - New backlog">
+  <action>prepare-backlog 워크플로우 호출하여 백로그 준비</action>
+  <invoke-workflow path="{prepare_backlog_workflow}">
+    <param name="backlog_source">direct_input</param>
+  </invoke-workflow>
+  <action>반환된 결과 저장:
+  - backlog_id, backlog_info, requirements, acceptance_criteria, context_notes, backlog_folder
+  </action>
+</check>
+
+<check if="option 3 - Notion search">
+  <invoke-workflow path="{prepare_backlog_workflow}">
+    <param name="backlog_source">search</param>
+  </invoke-workflow>
+</check>
+
+<action>준비된 백로그 정보 표시:
+
+"**분해할 백로그:**
+
+**{backlog_type}: {backlog_title}**
+
+**요구사항:** {req_count}개
+**수용 기준:** {ac_count}개
+**피그마:** {figma_status}
+**상위 백로그:** {parent_summary}"
+</action>
+
+<template-output>backlog_ready</template-output>
+</step>
+
+<step n="3" goal="코드베이스 분석 (선택적)">
+
+<action>기존 코드 분석 결과 확인: {backlog_folder}/code-analysis.md</action>
+
+<check if="existing analysis found">
+  <action>기존 분석 정보 표시</action>
+  <ask>기존 코드 분석을 어떻게 처리할까요?
+
+- [r] 재사용 - 기존 분석 결과 사용
+- [u] 업데이트 - 추가 분석 병합
+- [n] 새로 분석
+- [s] 건너뛰기 - 코드 분석 없이 진행</ask>
+  </check>
+
+<check if="no existing analysis">
+  <ask>코드베이스를 분석하시겠습니까?
+
+- [y] 예 - 코드 분석 후 분해 (권장)
+- [n] 아니오 - 바로 분해 진행</ask>
+  </check>
+
+<check if="analysis requested">
+  <invoke-workflow path="{analyze_codebase_workflow}">
+    <param name="backlog_id">{backlog_id}</param>
+    <param name="backlog_content">{backlog_info}</param>
+    <param name="backlog_folder">{backlog_folder}</param>
+  </invoke-workflow>
+  <action>반환된 {code_analysis}, {target_files}, {implementation_notes} 저장</action>
+</check>
+
+<template-output>code_analysis_step</template-output>
+</step>
+
+<step n="4" goal="분해 대상 유형 및 강도 선택">
+
+<action>백로그 유형에 따른 하위 유형 결정:
+
+{backlog_type}의 가능한 하위 유형을 가이드에서 로드
+</action>
+
+<check if="multiple child types available">
+  <ask>어떤 유형으로 분해하시겠습니까?
+
+{child_types_options}
+
+(가이드 권장: {default_child_type})</ask>
+</check>
+
+<action>분해 강도 선택 (런타임 오버라이드):
+
+"**분해 강도 선택**
+
+현재 기본값: {default_detail_level}
+
+| 옵션         | 설명                    | 예상 하위 항목 수 |
+| ------------ | ----------------------- | ----------------- |
+| [h] high     | 고수준 - 큰 단위        | 3-5개             |
+| [s] standard | 표준 - 중간 단위        | 5-8개             |
+| [d] detailed | 상세 - 파일/메서드 수준 | 8-15개            |
+
+"
+</action>
+
+<ask>분해 강도를 선택해 주세요:
+
+- [h] high - 큰 단위로 분해
+- [s] standard - 중간 단위로 분해 (기본값: {default_detail_level})
+- [d] detailed - 상세하게 분해
+- [enter] 기본값 사용</ask>
+
+<action>선택된 강도를 {selected_detail_level}에 저장</action>
+
+<template-output>decomposition_config</template-output>
+</step>
+
+<step n="5" goal="추적성 기반 백로그 분해">
+<critical>각 하위 백로그가 상위 백로그의 어떤 요구사항/수용기준을 담당하는지 명확히 매핑합니다.</critical>
+
+<action>분해 계획 수립:
+
+**분해 전략:**
+
+- 선택된 강도: {selected_detail_level}
+- 하위 유형: {target_child_type}
+- 코드 분석 반영: {code_analysis_available}
+  </action>
+
+<action>추적성을 포함한 하위 백로그 생성:
+
+각 하위 백로그에 포함할 정보:
+
+**기본 정보:**
+
+- Title: 명확하고 액션 지향적
+- Type: {target_child_type}
+- Description: 구체적인 범위와 목표
+- Acceptance Criteria: 완료 조건
+
+**📌 추적성 정보:**
+
+- parent_id: {backlog_id}
+- parent_title: {backlog_title}
+- covered_requirements: [REQ-XXX, ...] + 내용
+- covered_acceptance_criteria: [AC-XXX, ...] + 내용
+- sibling_backlogs: 형제 백로그 목록
+
+**피그마 전파 (UI 관련 하위 백로그):**
+<check if="figma_url exists">
+
+- figma_url: 상속
+- figma_node_id: 관련 노드
+- figma_inherited_from: {parent_title}
+  </check>
+
+**코드 컨텍스트 (코드 분석 있는 경우):**
+<check if="code_analysis available">
+
+- target_files: 관련 파일 목록
+- implementation_notes: 구현 주의사항
+  </check>
+  </action>
+
+<action>분해 계획 표시:
+
+"**{backlog_title} 분해 계획**
+
+**상위:** {backlog_type} - {backlog_title}
+**하위 유형:** {target_child_type}
+**분해 강도:** {selected_detail_level}
+**하위 항목 수:** {child_count}개
+
+---
+
+**1. {child_1_title}**
+
+- 설명: {child_1_description}
+- 📌 담당 요구사항: REQ-001, REQ-002
+- 📌 담당 수용기준: AC-001
+
+**2. {child_2_title}**
+
+- 설명: {child_2_description}
+- 📌 담당 요구사항: REQ-003
+- 📌 담당 수용기준: AC-002, AC-003
+
+... (모든 하위 항목)
+
+---
+
+**📊 요구사항 커버리지 매트릭스:**
+
+| 요구사항 | 담당 하위 백로그 | 커버리지 |
+| -------- | ---------------- | -------- |
+
+{coverage_matrix}
+"
+</action>
+
+<template-output>decomposition_plan</template-output>
+</step>
+
+<step n="6" goal="추적성 검증 - 누락 확인">
+<critical>모든 요구사항과 수용기준이 하위 백로그에 매핑되었는지 검증합니다.</critical>
+
+<action>커버리지 검증:
+
+모든 REQ-XXX가 최소 하나의 하위 백로그에 매핑되었는지 확인
+모든 AC-XXX가 최소 하나의 하위 백로그에 매핑되었는지 확인
+</action>
+
+<check if="unmapped items exist">
+  <action>누락 경고 표시:
+
+"**⚠️ 추적성 검증 결과: 누락 발견!**
+
+**매핑되지 않은 요구사항:**
+{unmapped_requirements}
+
+**매핑되지 않은 수용 기준:**
+{unmapped_criteria}"
+</action>
+
+<ask>누락된 항목을 어떻게 처리할까요?
+
+1. 기존 하위 백로그에 추가
+2. 새 하위 백로그 생성
+3. 의도적 제외 (이유 기록)
+4. 분해 재검토</ask>
+   </check>
+
+<check if="all items mapped">
+  <action>검증 통과:
+
+"**✅ 추적성 검증 완료!**
+
+- 모든 요구사항 ({req_count}개): 100% 매핑
+- 모든 수용 기준 ({ac_count}개): 100% 매핑"
+  </action>
+  </check>
+
+<ask>분해 계획을 승인하시겠습니까?
+
+1. 승인 - 저장 진행
+2. 수정 - 특정 항목 수정
+3. 재분해 - 처음부터</ask>
+
+<template-output>traceability_verified</template-output>
+</step>
+
+<step n="7" goal="하위 백로그 저장">
+
+<ask>분해된 하위 백로그를 어디에 저장하시겠습니까?
+
+- [l] 로컬 파일 시스템
+- [n] 노션
+- [b] 둘 다</ask>
+
+<check if="local save">
+  <action>폴더 구조 생성:
+
+```
+{output_folder}/{backlog_id}/
+├── backlog-info.yaml (업데이트: 하위 백로그 정보 추가)
+├── code-analysis.md (있는 경우)
+└── children/
+    ├── {child_1_id}/
+    │   ├── backlog.md
+    │   └── progress.yaml
+    ├── {child_2_id}/
+    │   └── ...
+```
+
+  </action>
+
+  <action for-each="child in children">
+    <action>하위 백로그 폴더 및 파일 생성</action>
+  </action>
+</check>
+
+<check if="notion save">
+  <action>노션 저장 전 확인:
+
+"**노션 저장 대상 확인:**
+
+- 대상 데이터베이스: {database_name}
+- 상위 백로그: {backlog_title} (ID: {notion_page_id})
+- 생성할 하위 백로그: {child_count}개"
+  </action>
+
+  <ask>이 위치에 저장하시겠습니까? (y/n)</ask>
+
+    <check if="y">
+      <action for-each="child in children">
+        <action>노션에 하위 백로그 페이지 생성</action>
+      </action>
+      <action>상위 백로그 Children 관계 업데이트</action>
+    </check>
+  </check>
+
+<template-output>backlogs_saved</template-output>
+</step>
+
+<step n="8" goal="완료 요약 및 Dev handoff">
+
+<action>완료 요약 표시:
+
+"**✅ 백로그 분해 완료!**
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+**상위 백로그:** {backlog_type} - {backlog_title}
+**생성된 하위 백로그:** {child_count}개 ({target_child_type})
+**분해 강도:** {selected_detail_level}
+
+**계층 구조:**
+
+```
+{backlog_title} ({backlog_type})
+├── {child_1_title} - REQ-001, REQ-002
+├── {child_2_title} - REQ-003
+└── ...
+```
+
+**📊 추적성 요약:**
+
+- 요구사항 커버리지: {req_coverage}%
+- 수용 기준 커버리지: {ac_coverage}%
+
+**저장 위치:**
+
+- 로컬: {local_path}
+- 노션: {notion_status}
+
+━━━━━━━━━━━━━━━━━━━━━━━"
+</action>
+
+<ask>다음 작업을 선택해 주세요:
+
+1. 🚀 **Dev 에이전트로 전환** - 바로 구현 시작
+2. 하위 백로그 중 하나를 다시 분해 (예: Story → Task)
+3. 다른 백로그 분해
+4. 추적성 매트릭스 상세 보기
+5. 완료</ask>
+
+<check if="option 1 - Dev handoff">
+  <action>Dev 에이전트 전환 준비:
+
+"**🚀 Dev 에이전트로 전환합니다!**
+
+**전달할 컨텍스트:**
+
+- 백로그: {backlog_title}
+- 하위 백로그: {child_count}개
+- 코드 분석: {code_analysis_status}
+- 작업 폴더: {backlog_folder}
+
+Dev 에이전트에서 `*continue` 명령으로 작업을 이어갈 수 있습니다."
+</action>
+<action>Dev 에이전트 로드 안내 또는 자동 전환</action>
+</check>
+
+<check if="option 2 - Decompose child">
+  <ask>어떤 하위 백로그를 분해하시겠습니까? (번호 입력)</ask>
+  <action>선택된 하위 백로그를 source_backlog로 설정</action>
+  <goto step="4">하위 백로그 분해</goto>
+</check>
+
+<check if="option 3 - Another backlog">
+  <goto step="2">새 백로그 선택</goto>
+</check>
+
+<template-output>completion_summary</template-output>
+</step>
+
+</workflow>

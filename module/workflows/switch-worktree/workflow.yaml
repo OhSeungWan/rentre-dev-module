@@ -1,0 +1,18 @@
+# Switch Worktree - Worktree 간 전환
+name: switch-worktree
+description: "활성 Worktree 간 전환 - 컨텍스트 저장 및 전환, 상태 동기화"
+author: "Backlog Pilot"
+
+config_source: "{project-root}/.bmad/backlog-pilot/config.yaml"
+communication_language: "{config_source}:communication_language"
+user_name: "{config_source}:user_name"
+worktree_path: "{config_source}:worktree_path"
+shared_path: "{config_source}:shared_path"
+
+installed_path: "{project-root}/.bmad/backlog-pilot/workflows/switch-worktree"
+module_path: "{project-root}/.bmad/backlog-pilot"
+
+template: false
+instructions: "{installed_path}/instructions.md"
+
+standalone: true

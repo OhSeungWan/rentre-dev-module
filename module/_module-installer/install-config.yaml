@@ -1,0 +1,145 @@
+# Rentre-Dev Module Configuration
+# This file defines installation questions and module configuration values
+
+code: rentre-dev
+name: "Rentre-Dev"
+default_selected: false
+
+# Welcome message shown during installation
+prompt:
+  - "Rentre-Dev에 오신 것을 환영합니다!"
+  - "노션 백로그와 개발 업무를 자동으로 연동하는 모듈입니다."
+
+# Core config values are automatically inherited:
+## user_name
+## communication_language
+## document_output_language
+## output_folder
+
+# ============================================================================
+# AGENTS (4개)
+# ============================================================================
+# - pm.agent.yaml (Pilot) - 백로그 관리 및 분해
+# - dev.agent.yaml (Coder) - 개발 작업 실행
+# - qa.agent.yaml (Inspector) - 품질 검증 및 리뷰
+# - navigator.agent.yaml (Navigator) - 백로그 구조 분석
+
+# ============================================================================
+# WORKFLOWS (10개)
+# ============================================================================
+# - prepare-backlog: 백로그 준비 및 컨텍스트 수집
+# - decompose-backlog: 백로그를 서브태스크로 분해
+# - review-progress: 진행 상황 리뷰
+# - edit-backlog-guide: 백로그 가이드 편집
+# - analyze-codebase: 코드베이스 분석
+# - analyze-db-structure: DB 구조 분석
+
+# ============================================================================
+# CONFIGURATION FIELDS
+# ============================================================================
+
+# Notion Integration Mode
+notion_integration:
+  prompt: "노션 연동 방식을 선택하세요"
+  default: "auto"
+  result: "{value}"
+  single-select:
+    - value: "auto"
+      label: "자동 연동 - 노션 MCP 서버를 통해 직접 읽기/쓰기"
+    - value: "semi"
+      label: "반자동 - 수동으로 복사/붙여넣기"
+
+# Subtask Detail Level
+subtask_detail_level:
+  prompt: "서브태스크 상세도를 선택하세요 (런타임에 변경 가능합니다.)"
+  default: "standard"
+  result: "{value}"
+  single-select:
+    - value: "high"
+      label: "고수준 - 큰 단위로 분해 (3-5개)"
+    - value: "standard"
+      label: "표준 - 중간 단위로 분해 (5-8개)"
+    - value: "detailed"
+      label: "상세 - 파일/메서드 수준으로 분해 (8-15개)"
+
+# Auto Sync Setting
+auto_sync:
+  prompt: "작업 완료 시 노션 자동 동기화를 사용하시겠습니까?"
+  default: "enabled"
+  result: "{value}"
+  single-select:
+    - value: "enabled"
+      label: "사용 - 작업 완료 시 자동으로 노션 업데이트"
+    - value: "disabled"
+      label: "사용 안함 - 수동으로 동기화"
+
+# Default Save Location
+default_save_location:
+  prompt: "백로그 분해 완료 후 기본 저장 위치를 선택하세요"
+  default: "ask"
+  result: "{value}"
+  single-select:
+    - value: "local"
+      label: "로컬만 - 로컬 파일 시스템에만 저장"
+    - value: "notion"
+      label: "노션만 - 노션에만 저장"
+    - value: "both"
+      label: "둘 다 - 로컬 + 노션 모두 저장"
+    - value: "ask"
+      label: "매번 묻기 - 분해 완료 시마다 선택"
+
+# Code Analysis Depth (기본 분석 깊이)
+code_analysis_depth:
+  prompt: "기본 코드 분석 깊이를 선택하세요"
+  default: "standard"
+  result: "{value}"
+  single-select:
+    - value: "quick"
+      label: "Quick - 빠른 탐색 (~10개 파일, ~1분)"
+    - value: "standard"
+      label: "Standard - 표준 분석 (~20개 파일, ~3분) [권장]"
+    - value: "deep"
+      label: "Deep - 심층 분석 (~30개 파일, ~5분)"
+    - value: "comprehensive"
+      label: "Comprehensive - 종합 분석 (~50개 파일, ~10분)"
+
+# Include Dependencies in Analysis
+include_dependencies:
+  prompt: "코드 분석 시 의존성(import/require)을 포함하시겠습니까?"
+  default: "true"
+  result: "{value}"
+  single-select:
+    - value: "true"
+      label: "포함 - 관련 의존성 파일도 분석"
+    - value: "false"
+      label: "제외 - 대상 파일만 분석"
+
+# Include Tests in Analysis
+include_tests:
+  prompt: "코드 분석 시 테스트 파일을 포함하시겠습니까?"
+  default: "false"
+  result: "{value}"
+  single-select:
+    - value: "true"
+      label: "포함 - 테스트 파일도 분석에 포함"
+    - value: "false"
+      label: "제외 - 테스트 파일 제외 (권장)"
+
+# ============================================================================
+# STATIC PATHS (no prompt - auto-generated)
+# ============================================================================
+
+data_path:
+  result: "{project-root}/.bmad/rentre-dev/data"
+
+tasks_path:
+  result: "{project-root}/.bmad/rentre-dev/data/tasks"
+
+backlogs_path:
+  result: "{project-root}/.bmad/rentre-dev/data/backlogs"
+
+reports_path:
+  result: "{project-root}/.bmad/rentre-dev/data/reports"
+
+guides_path:
+  result: "{project-root}/.bmad/rentre-dev/data/guides"
