@@ -41,7 +41,7 @@ ${chalk.yellow('Examples:')}
   npx rentre-dev install --yes
 
 ${chalk.yellow('Installation:')}
-  - 항상 프로젝트 루트의 rentre-dev/ 에 설치
+  - 프로젝트 루트의 bmad-custom-modules-src/rentre-dev/ 에 설치
 
 ${chalk.yellow('Features:')}
   - 4 Agents: PM, Dev, QA, Navigator
