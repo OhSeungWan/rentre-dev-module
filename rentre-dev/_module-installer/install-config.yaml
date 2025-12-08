@@ -5,10 +5,9 @@ code: rentre-dev
 name: "Rentre-Dev"
 default_selected: false
 
-# Welcome message shown during installation
-prompt:
-  - "Rentre-Dev에 오신 것을 환영합니다!"
-  - "노션 백로그와 개발 업무를 자동으로 연동하는 모듈입니다."
+header: 'Rentre-Dev에 오신 것을 환영합니다!'
+subheader: '노션 백로그와 개발 업무를 자동으로 연동하는 모듈입니다.'
+
 
 # Core config values are automatically inherited:
 ## user_name
