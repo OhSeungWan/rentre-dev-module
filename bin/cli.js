@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * rentre-dev-module CLI
- * BMAD 확장 모듈 설치 도구
+ * rentre-dev CLI
+ * 개발 워크플로우 자동화 모듈 설치 도구
  *
  * Usage:
- *   npx github:oseung-wan/rentre-dev-module [command]
+ *   npx rentre-dev [command]
  *
  * Commands:
  *   install     모듈 설치 (기본)
@@ -18,13 +18,14 @@ const chalk = require('chalk');
 const { install, uninstall, status } = require('../lib/installer');
 
 const command = process.argv[2] || 'install';
+const useDefaults = process.argv.includes('--yes') || process.argv.includes('-y') || process.argv.includes('--default');
 
 function showHelp() {
   console.log(`
-${chalk.cyan.bold('rentre-dev-module')} - BMAD 확장 모듈
+${chalk.cyan.bold('rentre-dev')} - 개발 워크플로우 자동화 모듈
 
 ${chalk.yellow('Usage:')}
-  npx github:oseung-wan/rentre-dev-module [command]
+  npx rentre-dev [command]
 
 ${chalk.yellow('Commands:')}
   ${chalk.green('install')}     모듈 설치 (기본)
@@ -33,15 +34,14 @@ ${chalk.yellow('Commands:')}
   ${chalk.green('help')}        도움말 표시
 
 ${chalk.yellow('Examples:')}
-  ${chalk.dim('# BMAD가 설치된 프로젝트에서 실행')}
-  npx github:oseung-wan/rentre-dev-module
+  ${chalk.dim('# 프로젝트에 rentre-dev 설치')}
+  npx rentre-dev install
 
-  ${chalk.dim('# 특정 버전 설치')}
-  npx github:oseung-wan/rentre-dev-module#v1.0.0
+  ${chalk.dim('# 기본값으로 설치 (프롬프트 생략)')}
+  npx rentre-dev install --yes
 
-${chalk.yellow('Requirements:')}
-  - BMAD Core가 먼저 설치되어 있어야 합니다
-  - npx bmad-method install 로 설치
+${chalk.yellow('Installation:')}
+  - 항상 프로젝트 루트의 rentre-dev/ 에 설치
 
 ${chalk.yellow('Features:')}
   - 4 Agents: PM, Dev, QA, Navigator
@@ -55,7 +55,7 @@ async function main() {
   try {
     switch (command) {
       case 'install':
-        await install();
+        await install({ useDefaults });
         break;
       case 'uninstall':
         await uninstall();

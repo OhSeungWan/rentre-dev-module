@@ -20,3 +20,7 @@ coverage/
 
 # Build
 dist/
+
+.bmad
+.bmad-user-memory
+.claude

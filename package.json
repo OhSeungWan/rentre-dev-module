@@ -1,7 +1,7 @@
 {
-  "name": "rentre-dev-module",
+  "name": "rentre-dev",
   "version": "1.0.0",
-  "description": "BMAD 확장 모듈 - 노션 백로그 관리 및 개발 워크플로우 자동화",
+  "description": "개발 워크플로우 자동화 모듈 - 노션 백로그 관리 및 AI 에이전트 기반 워크플로우",
   "main": "lib/installer.js",
   "bin": {
     "rentre-dev": "./bin/cli.js"
