@@ -190,6 +190,22 @@ hierarchy:
     related: { related_list }
 ```
 
+**🔧 Serena MCP로 프로젝트 컨텍스트 참조 (선택적):**
+
+```yaml
+# 프로젝트 메모리 목록 확인
+tool: mcp__serena__list_memories
+
+# 관련 컨텍스트 로드 (있는 경우)
+tool: mcp__serena__read_memory
+params:
+  memory_file_name: "architecture"  # 프로젝트 구조
+  # 또는 "conventions"  # 코딩 컨벤션
+  # 또는 "patterns"     # 디자인 패턴
+```
+
+> **💡 Tip:** Serena 메모리에 프로젝트 아키텍처 정보가 있으면 백로그 분석에 활용 가능
+
 ---
 
 ## SUCCESS METRICS:

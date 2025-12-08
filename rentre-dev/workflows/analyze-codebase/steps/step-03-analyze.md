@@ -95,7 +95,7 @@ partyModeWorkflow: '{project-root}/.bmad/core/workflows/party-mode/workflow.md'
 
 ### 3. Search Related Files
 
-키워드로 관련 파일 검색 (Grep, Glob, SERENA MCP 활용):
+키워드로 관련 파일 검색 (Grep, Glob, **Serena MCP** 활용):
 
 "**관련 파일 검색 중...**
 
@@ -103,7 +103,36 @@ partyModeWorkflow: '{project-root}/.bmad/core/workflows/party-mode/workflow.md'
 
 1. 파일명 매칭: {keywords}를 포함하는 파일
 2. 내용 매칭: {keywords}를 포함하는 코드
-3. import/require 추적: 관련 모듈 의존성"
+3. import/require 추적: 관련 모듈 의존성
+
+**🔧 Serena MCP 도구 활용:**
+
+```yaml
+# 1. 파일 심볼 구조 파악
+tool: mcp__serena__get_symbols_overview
+params:
+  relative_path: "{target_file}"
+
+# 2. 특정 함수/클래스 찾기
+tool: mcp__serena__find_symbol
+params:
+  name_path: "{symbol_name}"
+  relative_path: "{scope_path}"  # 선택적
+  include_body: false  # 구조만 파악
+
+# 3. 코드 패턴 검색
+tool: mcp__serena__search_for_pattern
+params:
+  substring_pattern: "{keyword_regex}"
+  relative_path: "{scope_path}"
+  context_lines_before: 2
+  context_lines_after: 2
+
+# 4. 프로젝트 컨텍스트 참조
+tool: mcp__serena__read_memory
+params:
+  memory_file_name: "{relevant_memory}"
+```"
 
 ### 4. Execute Depth-Specific Analysis
 

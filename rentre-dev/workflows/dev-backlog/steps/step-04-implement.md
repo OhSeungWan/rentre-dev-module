@@ -87,11 +87,52 @@ data_path: '{project-root}/.bmad/rentre-dev/data/backlogs'
 각 체크리스트 항목에 대해:
 
 <action>
-1. 관련 파일 읽기 (Read 도구 사용)
+1. 관련 파일 읽기 (Read 또는 **Serena MCP** 사용)
 2. 기존 코드 패턴 파악
-3. 수정/추가 코드 작성 (Edit/Write 도구 사용)
+3. 수정/추가 코드 작성 (Edit/Write 또는 **Serena MCP** 사용)
 4. 체크리스트 항목 완료 표시
 </action>
+
+**🔧 Serena MCP 도구 활용 (권장):**
+
+```yaml
+# 1. 파일 구조 파악
+tool: mcp__serena__get_symbols_overview
+params:
+  relative_path: "{target_file}"
+
+# 2. 수정할 심볼 찾기 + 소스 확인
+tool: mcp__serena__find_symbol
+params:
+  name_path: "{function_or_class_name}"
+  relative_path: "{file_path}"
+  include_body: true  # 소스 코드 포함
+
+# 3. 영향 범위 분석 (수정 전)
+tool: mcp__serena__find_referencing_symbols
+params:
+  name_path: "{symbol_to_modify}"
+  relative_path: "{file_path}"
+
+# 4. 심볼 단위 코드 수정
+tool: mcp__serena__replace_symbol_body
+params:
+  name_path: "{symbol_name}"
+  relative_path: "{file_path}"
+  body: "{new_implementation}"
+
+# 5. 새 코드 추가 (함수/클래스/import)
+tool: mcp__serena__insert_after_symbol  # 또는 insert_before_symbol
+params:
+  name_path: "{reference_symbol}"
+  relative_path: "{file_path}"
+  body: "{new_code}"
+```
+
+**⚠️ Serena 사용 시 주의:**
+- 프로젝트가 활성화되어 있어야 함
+- `replace_symbol_body`는 심볼 전체를 교체함
+- 변경 전 `find_referencing_symbols`로 영향 범위 확인 권장
 
 **구현 원칙:**
 

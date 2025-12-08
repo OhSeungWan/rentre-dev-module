@@ -32,6 +32,15 @@ agent:
       workflow: "{project-root}/{bmad_folder}/rentre-dev/workflows/dev-backlog/workflow.yaml"
       description: 서브태스크 구현 워크플로우 시작 (기존 진행 중 백로그 진행)
 
+    # === 에이전트 전환 ===
+    - trigger: back-to-pm
+      action: Load PM agent
+      description: PM 에이전트로 돌아가기
+
+    - trigger: back-to-qa
+      action: Load QA agent for review
+      description: QA 에이전트로 전환 (리뷰 요청)
+
     - trigger: exit
       action: Exit with confirmation
       description: 종료

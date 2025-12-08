@@ -133,6 +133,28 @@ result:
   - implementation_notes: 구현 주의사항
 ```
 
+**🔧 Serena MCP 도구 활용 (analyze-codebase 내부에서):**
+
+```yaml
+# 관련 코드 패턴 검색
+tool: mcp__serena__search_for_pattern
+params:
+  substring_pattern: "{backlog_keywords}"
+  context_lines_before: 2
+  context_lines_after: 2
+
+# 프로젝트 컨텍스트 참조
+tool: mcp__serena__read_memory
+params:
+  memory_file_name: "architecture"  # 또는 관련 메모리
+
+# 분석 결과 저장 (선택적)
+tool: mcp__serena__write_memory
+params:
+  memory_name: "backlog-{backlog_id}-analysis"
+  content: "{analysis_summary}"
+```
+
 분석 결과 표시:
 
 > "**✅ 코드 분석 완료**

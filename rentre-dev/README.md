@@ -257,13 +257,52 @@ rentre-dev/
 | `*figma`      | 피그마 디자인 스펙 조회 (MCP 연동) |
 | `*figma-code` | 피그마에서 컴포넌트 코드 생성      |
 
+## Serena MCP 연동
+
+워크플로우 내부에서 **Serena MCP**를 도구로 활용하여 코드 분석 및 수정을 수행합니다.
+
+### 워크플로우별 Serena 활용
+
+| 워크플로우 | Serena 활용 |
+|------------|-------------|
+| **analyze-codebase** | `get_symbols_overview`, `find_symbol`로 코드 구조 분석 |
+| **decompose-backlog** | `search_for_pattern`으로 관련 코드 탐색, `read_memory`로 컨텍스트 참조 |
+| **dev-backlog** | `find_symbol`, `replace_symbol_body`, `insert_*_symbol`로 구현 |
+| **prepare-backlog** | `read_memory`로 프로젝트 컨텍스트 참조 |
+
+### 주요 Serena 도구
+
+| 도구 | 용도 |
+|------|------|
+| `get_symbols_overview` | 파일 내 심볼(클래스, 함수) 구조 파악 |
+| `find_symbol` | 특정 심볼 위치 및 소스 코드 조회 |
+| `find_referencing_symbols` | 심볼 참조 찾기 (영향 범위 분석) |
+| `search_for_pattern` | 코드 패턴 검색 (정규식 지원) |
+| `replace_symbol_body` | 심볼 단위 코드 수정 |
+| `insert_after/before_symbol` | 새 코드 추가 |
+| `read/write_memory` | 프로젝트 컨텍스트 저장/로드 |
+
+> **참고**: Serena MCP 사용 전 대상 프로젝트가 활성화되어 있어야 합니다.
+
 ## Requirements
 
 - BMAD Method v6+
 - 노션 MCP 서버 (auto 모드 사용 시)
 - **피그마 MCP 서버** (피그마 연동 사용 시)
+- **Serena MCP 서버** (코드 분석/수정 사용 시)
 
 ## Changelog
+
+### v2.4.0 (2024-12)
+
+**주요 변경사항:**
+
+- **Serena MCP 워크플로우 통합** - 워크플로우 내부에서 Serena MCP 도구 활용
+  - analyze-codebase: 심볼 구조 분석
+  - decompose-backlog: 관련 코드 탐색 + 컨텍스트 참조
+  - dev-backlog: 심볼 단위 코드 수정/추가
+  - prepare-backlog: 프로젝트 컨텍스트 참조
+- **Dev 에이전트 개선** - 에이전트 전환 명령 추가 (`*back-to-pm`, `*back-to-qa`)
 
 ### v2.3.0 (2024-12)
 
