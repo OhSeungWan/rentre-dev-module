@@ -41,8 +41,8 @@ ${chalk.yellow('Examples:')}
   npx rentre-dev install --yes
 
 ${chalk.yellow('Installation:')}
-  - BMAD 설치 경로 하위의 rentre-dev/ 에 설치 (기본: .bmad/rentre-dev/)
-  - BMAD core 모듈이 먼저 설치되어 있어야 합니다
+  - 지정한 경로에 rentre-dev/ 폴더 생성 및 복사 (기본: ./rentre-dev/)
+  - 모든 에이전트, 워크플로우, 템플릿, 태스크 파일이 그대로 복사됨
 
 ${chalk.yellow('Features:')}
   - 4 Agents: PM, Dev, QA, Navigator

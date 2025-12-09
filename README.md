@@ -4,15 +4,12 @@ BMAD 확장 모듈 - 노션 백로그 관리 및 개발 워크플로우 자동�
 
 ## 설치
 
-**전제조건**: BMAD Core가 먼저 설치되어 있어야 합니다.
-
 ```bash
-# 1. BMAD Core 설치 (아직 설치하지 않은 경우)
-npx bmad-method install
-
-# 2. rentre-dev 모듈 설치
+# rentre-dev 모듈 설치
 npx github:oseung-wan/rentre-dev-module
 ```
+
+> 기본 설치 경로는 `./rentre-dev/`입니다. 설치 시 다른 경로를 지정할 수 있습니다.
 
 ### 특정 버전 설치
 
@@ -87,26 +84,19 @@ npx github:oseung-wan/rentre-dev-module help
 설치 후 생성되는 구조:
 
 ```
-{bmad_folder}/
+{설치경로}/
 └── rentre-dev/
-    ├── config.yaml           # 모듈 설정
+    ├── module.yaml           # 모듈 정보
     ├── agents/               # 에이전트 정의
-    │   ├── pm.agent.yaml
-    │   ├── dev.agent.yaml
-    │   ├── qa.agent.yaml
-    │   └── navigator.agent.yaml
+    │   ├── navigator.agent.yaml
+    │   └── qa.agent.yaml
     ├── workflows/            # 워크플로우
-    │   ├── prepare-backlog/
-    │   ├── decompose-backlog/
-    │   ├── dev-backlog/
+    │   ├── analyze-codebase/
+    │   ├── analyze-db-structure/
     │   └── ...
     ├── templates/            # 템플릿
-    ├── docs/                 # 문서
-    └── data/                 # 데이터 (생성됨)
-        ├── tasks/
-        ├── backlogs/
-        ├── reports/
-        └── guides/
+    ├── tasks/                # 태스크
+    └── docs/                 # 문서
 ```
 
 ## 라이선스
