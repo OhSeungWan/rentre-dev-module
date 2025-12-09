@@ -9,6 +9,12 @@ workflow_path: '{module_path}/workflows/analyze-db-structure'
 thisStepFile: '{workflow_path}/steps/step-05-complete.md'
 workflowFile: '{workflow_path}/workflow.md'
 
+# Task References
+# (final step - no task references needed)
+
+# Template References
+# (final step - no templates used)
+
 # Output References
 guides_folder: '{module_path}/data/guides'
 ---

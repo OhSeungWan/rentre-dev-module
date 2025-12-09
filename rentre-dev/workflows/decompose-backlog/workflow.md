@@ -1,8 +1,32 @@
 ---
 name: Decompose Backlog Workflow
-description: 계층적 백로그 분해 - 준비된 백로그를 가이드 기반으로 하위 유형으로 분해 (Epic→Story, Story→Task, Task→Subtask 등) + Dev handoff
-main_config: '{project-root}/{bmad_folder}/rentre-dev/config.yaml'
-web_bundle: true
+description: 계층적 백로그 분해 - 준비된 백로그를 가이드 기반으로 하위 유형으로 분해 + Dev handoff
+author: Rentre-Dev
+
+# Configuration
+config_source: '{project-root}/{bmad_folder}/rentre-dev/config.yaml'
+installed_path: '{project-root}/{bmad_folder}/rentre-dev/workflows/decompose-backlog'
+module_path: '{project-root}/{bmad_folder}/rentre-dev'
+
+# Paths
+guides_folder: '{module_path}/data/guides'
+data_path: '{module_path}/data'
+output_folder: '{data_path}/backlogs'
+
+# Templates
+backlog_template: '{module_path}/templates/backlog-item-template.md'
+subtask_template: '{module_path}/templates/subtask-template.md'
+
+# Runtime Options
+runtime_options:
+  detail_level:
+    options: [high, standard, detailed]
+    default: standard
+
+# Related Workflows
+related_workflows:
+  - prepare-backlog
+  - analyze-codebase
 ---
 
 # Decompose Backlog Workflow
@@ -63,7 +87,7 @@ This uses **step-file architecture** for disciplined execution:
 
 ### 1. Configuration Loading
 
-Load and read full config from {main_config} and resolve:
+Load and read full config from {config_source} and resolve:
 
 - `user_name`, `communication_language`
 - `notion_integration`, `output_folder`
@@ -74,12 +98,10 @@ Load and read full config from {main_config} and resolve:
 
 Note these paths for use during the workflow (load on-demand, not upfront):
 
-- **Guides Folder**: `{module_path}/data/guides`
+- **Guides Folder**: `{guides_folder}`
 - **Hierarchy Guide**: `{guides_folder}/hierarchy-map.md`
 - **Summary Guide**: `{guides_folder}/backlog-guide-summary.md`
-- **Prepare Backlog Workflow**: `{module_path}/workflows/prepare-backlog/workflow.yaml`
-- **Analyze Codebase Workflow**: `{module_path}/workflows/analyze-codebase/workflow.yaml`
 
 ### 3. First Step Execution
 
-Load, read the full file and then execute `steps/step-01-load-guides.md` to begin the workflow.
+Load, read the full file and then execute `{installed_path}/steps/step-01-load-guides.md` to begin the workflow.

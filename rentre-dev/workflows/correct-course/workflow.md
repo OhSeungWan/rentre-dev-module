@@ -1,3 +1,45 @@
+---
+name: Correct Course
+description: 백로그 진행 중 발생하는 변경사항, 방향 수정, 범위 조정 등을 체계적으로 관리
+author: Rentre-Dev
+version: 1.0.0
+web_bundle: true
+
+# Configuration
+config_source: '{project-root}/.bmad/rentre-dev/config.yaml'
+installed_path: '{project-root}/.bmad/rentre-dev/workflows/correct-course'
+module_path: '{project-root}/.bmad/rentre-dev'
+data_path: '{module_path}/data/backlogs'
+
+# Steps
+steps:
+  - step-01-init
+  - step-02-identify-change
+  - step-03-load-context
+  - step-04-analyze-impact
+  - step-05-apply-changes
+  - step-06-complete
+
+# Change Types
+change_types:
+  - requirement_change: 요구사항 변경
+  - subtask_add: 서브태스크 추가
+  - subtask_modify: 서브태스크 수정
+  - scope_change: 범위 변경
+  - risk_identified: 리스크 식별
+  - priority_change: 우선순위 변경
+
+# MCP Tools
+mcp_tools:
+  optional: [serena, context7, playwright, notionApi]
+
+# Features
+features:
+  change_history_tracking: true
+  block_traceability: true
+  notion_sync: conditional
+---
+
 # Correct Course Workflow
 
 **Goal:** 백로그 진행 중 발생하는 변경사항을 체계적으로 분석하고 적용하여 추적 가능한 변경 이력을 유지합니다.
@@ -40,11 +82,11 @@
 
 ### 1. Configuration Loading
 
-Load config from {project-root}/.bmad/rentre-dev/config.yaml:
+Load config from {config_source}:
 
 - `user_name`, `communication_language`, `notion_integration`
 - `data_path` for backlog data location
 
 ### 2. First Step Execution
 
-Load and execute `{installed_path}/steps/step-01-init.md`
+Load, read the full file and then execute `{installed_path}/steps/step-01-init.md` to begin the workflow.

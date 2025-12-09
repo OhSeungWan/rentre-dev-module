@@ -12,6 +12,10 @@ workflowFile: '{workflow_path}/workflow.md'
 
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
+partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workflow.md'
+
+# Template References
+# (analysis step - no templates used)
 ---
 
 # Step 2: 데이터베이스 스키마 분석

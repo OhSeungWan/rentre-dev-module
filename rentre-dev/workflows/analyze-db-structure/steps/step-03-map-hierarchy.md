@@ -9,6 +9,13 @@ workflow_path: '{module_path}/workflows/analyze-db-structure'
 thisStepFile: '{workflow_path}/steps/step-03-map-hierarchy.md'
 nextStepFile: '{workflow_path}/steps/step-04-generate-guides.md'
 workflowFile: '{workflow_path}/workflow.md'
+
+# Task References
+advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
+partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workflow.md'
+
+# Template References
+# (mapping step - no templates used)
 ---
 
 # Step 3: 백로그 계층 구조 및 관계 매핑

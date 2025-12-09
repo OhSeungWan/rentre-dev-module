@@ -1,7 +1,29 @@
 ---
 name: Quick Execute
 description: 간단한 단독 백로그를 분해 없이 바로 분석 후 빠르게 실행하는 워크플로우
-web_bundle: false
+author: Rentre-Dev
+
+# Configuration
+config_source: '{project-root}/.bmad/rentre-dev/config.yaml'
+installed_path: '{project-root}/.bmad/rentre-dev/workflows/quick-execute'
+module_path: '{project-root}/.bmad/rentre-dev'
+
+# Paths
+data_path: '{module_path}/data'
+backlogs_output: '{data_path}/backlogs'
+tasks_output: '{data_path}/tasks'
+guides_folder: '{module_path}/data/guides'
+
+# Templates & Tasks
+backlog_template: '{module_path}/templates/backlog-item-template.md'
+gather_context_task: '{module_path}/tasks/gather-context.md'
+
+# Complexity Thresholds
+complexity_thresholds:
+  max_estimated_hours: 4
+  max_acceptance_criteria: 5
+  max_affected_files: 10
+  warning_keywords: [대규모, 리팩토링, 마이그레이션, 아키텍처, 전체, 시스템]
 ---
 
 # Quick Execute
@@ -45,18 +67,22 @@ This uses **step-file architecture** for disciplined execution:
 
 ---
 
+## PREREQUISITES
+
+- Simple, standalone backlog (not requiring decomposition)
+- Can be completed in a single work session
+- Estimated effort within complexity thresholds
+
+---
+
 ## INITIALIZATION SEQUENCE
 
 ### 1. Configuration Loading
 
-Load and read full config from {project-root}/.bmad/rentre-dev/config.yaml and resolve:
+Load and read full config from {config_source} and resolve:
 
 - `user_name`, `communication_language`, `notion_integration`, `code_analysis_depth`
 
-Also load workflow-specific config from {workflow_path}/workflow.yaml for:
-
-- `complexity_thresholds`, `backlogs_output`, `tasks_output`
-
 ### 2. First Step EXECUTION
 
-Load, read the full file and then execute `{workflow_path}/steps/step-01-get-backlog.md` to begin the workflow.
+Load, read the full file and then execute `{installed_path}/steps/step-01-get-backlog.md` to begin the workflow.

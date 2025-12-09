@@ -1,7 +1,7 @@
 ---
 name: Prepare Backlog Workflow
 description: 백로그 분석 및 준비 - 상/하위/연결 백로그 종합 분석, 요구사항 구조화, 컨텍스트 수집
-web_bundle: true
+author: Rentre-Dev
 
 # Configuration Source
 config_source: '{project-root}/{bmad_folder}/rentre-dev/config.yaml'

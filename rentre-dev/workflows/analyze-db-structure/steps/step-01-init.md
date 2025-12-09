@@ -10,6 +10,12 @@ thisStepFile: '{workflow_path}/steps/step-01-init.md'
 nextStepFile: '{workflow_path}/steps/step-02-analyze-schema.md'
 workflowFile: '{workflow_path}/workflow.md'
 
+# Task References
+# (init step - no task references needed)
+
+# Template References
+# (init step - no templates used)
+
 # Output References
 guides_folder: '{module_path}/data/guides'
 ---

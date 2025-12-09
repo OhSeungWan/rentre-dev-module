@@ -10,9 +10,15 @@ thisStepFile: '{workflow_path}/steps/step-04-generate-guides.md'
 nextStepFile: '{workflow_path}/steps/step-05-complete.md'
 workflowFile: '{workflow_path}/workflow.md'
 
+# Task References
+advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
+partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workflow.md'
+
+# Template References
+output_template: '{workflow_path}/templates/guide-summary.md'
+
 # Output References
 guides_folder: '{module_path}/data/guides'
-output_template: '{workflow_path}/templates/guide-summary.md'
 ---
 
 # Step 4: 가이드 문서 생성
@@ -352,4 +358,3 @@ ONLY WHEN [C continue option] is selected and [모든 가이드 문서가 생성
 - **CRITICAL**: 스텝 파일 일부만 읽음
 
 **Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
-```
