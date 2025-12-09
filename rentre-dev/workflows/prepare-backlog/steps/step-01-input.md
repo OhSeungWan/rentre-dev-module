@@ -10,6 +10,7 @@ thisStepFile: '{workflow_path}/steps/step-01-input.md'
 nextStepFile: '{workflow_path}/steps/step-02-context-analysis.md'
 workflowFile: '{workflow_path}/workflow.md'
 continueStepFile: '{workflow_path}/steps/step-01b-continue.md'
+data_path: '{module_path}/data'
 
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
@@ -75,7 +76,7 @@ partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workf
 
 먼저 출력 폴더에 기존 작업이 있는지 확인:
 
-- `{output_folder}/` 내 백로그 폴더 확인
+- `{data_path}/` 내 백로그 폴더 확인
 - 있으면 frontmatter의 `stepsCompleted` 확인
 - 재개가 필요하면 `./step-01b-continue.md` 로드
 

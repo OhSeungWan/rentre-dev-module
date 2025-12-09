@@ -11,7 +11,6 @@ module_path: '{project-root}/{bmad_folder}/rentre-dev'
 # Paths
 guides_folder: '{module_path}/data/guides'
 data_path: '{module_path}/data'
-output_folder: '{data_path}/backlogs'
 
 # Templates
 backlog_template: '{module_path}/templates/backlog-item-template.md'

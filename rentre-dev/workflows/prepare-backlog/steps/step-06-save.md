@@ -10,6 +10,7 @@ thisStepFile: '{workflow_path}/steps/step-06-save.md'
 nextStepFile: '{workflow_path}/steps/step-07-complete.md'
 prevStepFile: '{workflow_path}/steps/step-05-context-verify.md'
 workflowFile: '{workflow_path}/workflow.md'
+data_path: '{module_path}/data'
 
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
@@ -76,10 +77,10 @@ action:
 
 ### 2. 저장 폴더 생성
 
-**폴더 경로:** `{output_folder}/{backlog_id}/`
+**폴더 경로:** `{data_path}/{backlog_id}/`
 
 ```bash
-mkdir -p {output_folder}/{backlog_id}
+mkdir -p {data_path}/{backlog_id}
 ```
 
 ---
@@ -188,7 +189,7 @@ raw:
 >
 > ━━━━━━━━━━━━━━━━━━━━━━━
 >
-> **저장 위치:** `{output_folder}/{backlog_id}/`
+> **저장 위치:** `{data_path}/{backlog_id}/`
 >
 > **저장된 파일:**
 >

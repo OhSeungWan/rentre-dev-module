@@ -9,6 +9,7 @@ workflow_path: '{project-root}/{bmad_folder}/rentre-dev/workflows/prepare-backlo
 thisStepFile: '{workflow_path}/steps/step-07-complete.md'
 workflowFile: '{workflow_path}/workflow.md'
 step01File: '{workflow_path}/steps/step-01-input.md'
+data_path: '{module_path}/data'
 
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
@@ -86,7 +87,7 @@ All data collected throughout the workflow:
 > - 피그마: {figma_status}
 > - 참조 문서: {ref_count}개
 >
-> **저장 위치:** `{output_folder}/{backlog_id}/`
+> **저장 위치:** `{data_path}/{backlog_id}/`
 >
 > ━━━━━━━━━━━━━━━━━━━━━━━"
 
@@ -104,7 +105,7 @@ action:
     acceptance_criteria: { acceptance_criteria }
     context_notes: { context_notes }
     context_score: { context_score }
-    backlog_folder: '{output_folder}/{backlog_id}'
+    backlog_folder: '{data_path}/{backlog_id}'
   then: '호출 워크플로우로 제어 반환'
 ```
 
@@ -168,7 +169,7 @@ Display: **Select an Option:** [1] 코드베이스 분석 [2] 백로그 분해 [
 ```yaml
 stepsCompleted: [1, 2, 3, 4, 5, 6, 7]
 status: completed
-output: '{output_folder}/{backlog_id}/backlog-info.yaml'
+output: '{data_path}/{backlog_id}/backlog-info.yaml'
 ```
 
 **Return Values (for invoking workflows):**

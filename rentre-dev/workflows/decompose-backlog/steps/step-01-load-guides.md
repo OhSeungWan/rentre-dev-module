@@ -15,6 +15,7 @@ workflowFile: '{workflow_path}/workflow.md'
 guides_folder: '{module_path}/data/guides'
 hierarchy_guide: '{guides_folder}/hierarchy-map.md'
 summary_guide: '{guides_folder}/backlog-guide-summary.md'
+data_path: '{module_path}/data'
 ---
 
 # Step 1: 가이드 파일 로드 및 사전 조건 확인
@@ -72,7 +73,7 @@ summary_guide: '{guides_folder}/backlog-guide-summary.md'
 
 먼저 출력 폴더에 기존 분해 작업이 있는지 확인:
 
-- `{output_folder}/` 내 분해 중인 백로그 폴더 확인
+- `{data_path}/backlogs` 내 분해 중인 백로그 폴더 확인
 - 있으면 frontmatter의 `stepsCompleted` 확인
 - 재개가 필요하면 `{continueStepFile}` 로드
 

@@ -10,6 +10,7 @@ thisStepFile: '{workflow_path}/steps/step-07-save.md'
 nextStepFile: '{workflow_path}/steps/step-08-complete.md'
 previousStepFile: '{workflow_path}/steps/step-06-verify.md'
 workflowFile: '{workflow_path}/workflow.md'
+data_path: '{module_path}/data'
 ---
 
 # Step 7: 하위 백로그 저장
@@ -69,7 +70,7 @@ workflowFile: '{workflow_path}/workflow.md'
 
 > "**분해된 하위 백로그를 어디에 저장하시겠습니까?**
 >
-> - [l] **로컬 파일 시스템** - `{output_folder}/{backlog_id}/children/`
+> - [l] **로컬 파일 시스템** - `{data_path}/{backlog_id}/children/`
 > - [n] **노션** - 상위 백로그의 하위 페이지로 생성
 > - [b] **둘 다** - 로컬과 노션 모두 저장"
 
@@ -80,7 +81,7 @@ workflowFile: '{workflow_path}/workflow.md'
 **폴더 구조 생성:**
 
 ```
-{output_folder}/{backlog_id}/
+{data_path}/{backlog_id}/
 ├── backlog-info.yaml (업데이트: 하위 백로그 정보 추가)
 ├── code-analysis.md (있는 경우)
 └── children/
@@ -162,7 +163,7 @@ traceability:
 
 > "**✅ 로컬 저장 완료 (Block-based v2.0)**
 >
-> 저장 위치: `{output_folder}/{backlog_id}/children/`
+> 저장 위치: `{data_path}/{backlog_id}/children/`
 >
 > 생성된 파일:
 >

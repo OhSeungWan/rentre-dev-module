@@ -8,6 +8,7 @@ workflow_path: '{project-root}/{bmad_folder}/rentre-dev/workflows/prepare-backlo
 # File References
 thisStepFile: '{workflow_path}/steps/step-01b-continue.md'
 workflowFile: '{workflow_path}/workflow.md'
+data_path: '{module_path}/data'
 
 # Routing Step Files
 step02File: '{workflow_path}/steps/step-02-context-analysis.md'
@@ -65,7 +66,7 @@ partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workf
 기존 백로그 폴더에서 상태 로드:
 
 ```yaml
-load_from: '{output_folder}/{backlog_id}/backlog-info.yaml'
+load_from: '{data_path}/{backlog_id}/backlog-info.yaml'
 restore:
   - backlog_id
   - title
