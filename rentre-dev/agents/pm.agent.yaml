@@ -49,6 +49,10 @@ agent:
       workflow: "{project-root}/{bmad_folder}/rentre-dev/workflows/analyze-codebase/workflow.yaml"
       description: 코드베이스 분석 - 백로그 관련 코드 분석 및 결과 저장
 
+    - trigger: correct
+      workflow: "{project-root}/{bmad_folder}/rentre-dev/workflows/correct-course/workflow.md"
+      description: 백로그 피벗 - 백로그 진행 방향 재조정, 내용 수정
+
     # ===  컨텍스트 (태스크) ===
     - trigger: gather
       exec: "{project-root}/{bmad_folder}/rentre-dev/tasks/gather-context.md"
