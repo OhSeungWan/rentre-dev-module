@@ -12,7 +12,8 @@ workflowFile: '{workflow_path}/workflow.yaml'
 
 # Data References
 data_path: '{project-root}/.bmad/rentre-dev/data/backlogs'
-session_state: '{data_path}/{backlog_id}/session-state.yaml'
+session_state_file: '{data_path}/{backlog_id}/session-state.yaml'
+progress_file: '{data_path}/{backlog_id}/subtasks/{current_subtask_id}/progress.yaml'
 ---
 
 # Step 6: 완료 처리
@@ -74,17 +75,29 @@ session_state: '{data_path}/{backlog_id}/session-state.yaml'
 ### 2. 세션 상태 저장
 
 <action>
-세션 상태 파일 업데이트: {session_state}
+1. Update {progress_file}:
+
+```yaml
+status: "completed"
+last_updated: "{timestamp}"
+save_reason: "subtask_complete"
+```
+
+2. Update {session_state_file}:
 
 ```yaml
 backlog_id: '{backlog_id}'
-current_subtask: { next_subtask_number }
-completed_subtasks: [{ completed_list }]
-total_subtasks: { total_count }
+stepsCompleted: [1, 2, 3, 4, 5, 6]  # 🆕 Full cycle complete
+current_subtask: {next_subtask_number}
+completed_subtasks: [{completed_list}]
+total_subtasks: {total_count}
 last_updated: '{current_timestamp}'
 last_completed: '{current_subtask_id}'
+session:
+  last_step: ""           # 🆕 Reset for next subtask
+  can_resume: false       # 🆕 No mid-step progress
+  current_subtask_id: ""  # 🆕 Clear current
 ```
-
 </action>
 
 **세션 상태 저장됨**
@@ -172,7 +185,9 @@ Display: **백로그 완료!** [P] PR 요약 생성 | [A] QA 에이전트 호출
 
 #### Menu Handling Logic:
 
-- IF N: load {selectStepFile} to select next subtask
+- IF N:
+  1. 🆕 Reset {session_state_file}: `stepsCompleted: [1]` (다음 서브태스크용)
+  2. Load {selectStepFile} to select next subtask
 - IF P: PR 요약 워크플로우 실행
 - IF A: QA 에이전트 로드
 - IF Q: 최종 저장 확인 후 워크플로우 종료

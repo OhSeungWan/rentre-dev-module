@@ -12,7 +12,9 @@ workflowFile: '{workflow_path}/workflow.yaml'
 
 # Data References
 data_path: '{project-root}/.bmad/rentre-dev/data/backlogs'
+session_state_file: '{data_path}/{backlog_id}/session-state.yaml'
 session_state_template: '{workflow_path}/templates/session-state.yaml'
+progress_template: '{workflow_path}/templates/progress.yaml'
 ---
 
 # Step 1: 초기화
@@ -41,13 +43,13 @@ session_state_template: '{workflow_path}/templates/session-state.yaml'
 - 🎯 Focus ONLY on initialization and environment setup
 - 🚫 FORBIDDEN to start implementation in this step
 - 💬 Check MCP tools and session state
-- 🚪 Auto-proceed to next step after setup
+- 🆕 💾 Use stepsCompleted array for session resumption
 
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Check MCP installation status
 - 💾 Load or create session state
-- 📖 Auto-proceed to step 2 after initialization
+- 🆕 📖 Use stepsCompleted to determine resume point
 - 🚫 FORBIDDEN to skip MCP check
 
 ## SEQUENCE OF INSTRUCTIONS:
@@ -87,65 +89,102 @@ session_state_template: '{workflow_path}/templates/session-state.yaml'
 
 ### 4. 세션 상태 로드 또는 생성
 
-<action>세션 상태 파일 확인: {data_path}/{backlog_id}/session-state.yaml</action>
+<action>세션 상태 파일 확인: {session_state_file}</action>
 
 <check if="session state exists">
 <action>기존 세션 상태 로드</action>
 
-**📋 이전 세션 복원:**
+**📋 이전 세션 발견:**
 
-- 백로그: {backlog_id}
-- 현재 서브태스크: {current_subtask}/{total_subtasks}
-- 완료된 백로그: {completed_count}개
-- 마지막 작업: {last_updated}
-  </check>
+| 항목 | 값 |
+|------|-----|
+| 백로그 | {backlog_id} |
+| 현재 서브태스크 | {current_subtask}/{total_subtasks} |
+| 완료된 서브태스크 | {completed_subtasks.length}개 |
+| 마지막 작업 | {last_updated} |
+</check>
 
 <check if="session state not exists">
-<action>새 세션 상태 생성</action>
+<action>새 세션 상태 생성 from {session_state_template}</action>
 
 **🆕 새 세션 시작:**
 
 - 백로그: {backlog_id}
-  </check>
+</check>
 
-### 4b. 세션 복원 분기 (Checkpoint Restoration)
+### 4b. 🆕 세션 복원 분기 (stepsCompleted 기반)
 
-<check if="session state has current_step AND current_step is not empty">
-**🔄 이전 세션 체크포인트 발견!**
+<action>
+Load session state and check:
+1. stepsCompleted array
+2. session.can_resume flag
+3. session.current_subtask_id
+</action>
+
+<check if="stepsCompleted.length > 1 OR session.can_resume == true">
+**🔄 이전 세션 진행 상태 발견!**
 
 | 항목 | 값 |
 |------|-----|
-| 저장된 스텝 | {current_step} |
-| 저장 시간 | {checkpoint.saved_at} |
-| 저장 이유 | {checkpoint.reason} |
-| 진행상황 | {step_progress.checklist_completed}/{step_progress.checklist_total} |
+| 🆕 완료된 스텝 | {stepsCompleted} |
+| 마지막 스텝 | {session.last_step} |
+| 현재 서브태스크 | {session.current_subtask_id} |
+| 중간 저장 | {session.can_resume ? "있음" : "없음"} |
 
-<check if="checkpoint.reason == 'context_low'">
-**⚠️ 이전 세션은 컨텍스트 부족으로 저장되었습니다.**
+<check if="session.can_resume == true">
+**💾 구현 중간 진행 상태 발견!**
+
+progress.yaml 위치: `{data_path}/{backlog_id}/subtasks/{session.current_subtask_id}/progress.yaml`
+
+<action>Load progress.yaml and display:</action>
+
+| 항목 | 값 |
+|------|-----|
+| 서브태스크 | {subtask_title} |
+| 체크리스트 진행 | {checklist.completed.length}/{checklist.total} |
+| 변경된 파일 | {files_changed.length}개 |
+| 작성된 테스트 | {tests.written.length}개 |
 </check>
 
 **선택하세요:**
+
 | 옵션 | 설명 |
 |------|------|
 | **[R]** | 저장 지점에서 이어서 작업 (권장) |
 | **[N]** | 처음부터 새로 시작 |
 
 <action if="R">
-체크포인트 정보를 유지하고, Section 5-6 완료 후 {current_step} 파일로 직접 이동
-(Step 2 스킵)
+🆕 stepsCompleted 기반 라우팅:
+
+```yaml
+routing:
+  stepsCompleted: [1] → step-02-select.md
+  stepsCompleted: [1,2] → step-03-context.md
+  stepsCompleted: [1,2,3] → step-04-implement.md (progress.yaml 복원)
+  stepsCompleted: [1,2,3,4] → step-05-verify.md
+  stepsCompleted: [1,2,3,4,5] → step-06-complete.md
+```
+
+마지막 완료 스텝 기준으로 다음 스텝 로드
 </action>
 
 <action if="N">
-checkpoint 정보 초기화:
-- current_step: ""
-- checkpoint: 모두 비움
-- step_progress: 모두 비움
+세션 상태 초기화:
+
+```yaml
+stepsCompleted: [1]
+session:
+  last_step: ""
+  can_resume: false
+  current_subtask_id: ""
+```
+
 이후 정상 플로우 (Step 2)로 진행
 </action>
 </check>
 
-<check if="no current_step OR current_step is empty">
-**ℹ️ 체크포인트 없음** - 정상 플로우로 진행
+<check if="stepsCompleted.length <= 1 AND session.can_resume == false">
+**ℹ️ 이전 진행 상태 없음** - 정상 플로우로 진행
 </check>
 
 ### 5. 서브태스크 목록 로드
@@ -179,27 +218,49 @@ PM 에이전트에서 `*decompose` 명령으로 백로그를 분해해주세요.
 
 **✅ 초기화 완료**
 
-- 백로그: {backlog_id}
-- 서브태스크: {total_subtasks}개
-- MCP 도구: {available_mcp_count}/{total_mcp_count}개 사용 가능
+| 항목 | 값 |
+|------|-----|
+| 백로그 | {backlog_id} |
+| 서브태스크 | {total_subtasks}개 |
+| MCP 도구 | {available_mcp_count}/{total_mcp_count}개 사용 가능 |
+| 🆕 stepsCompleted | {stepsCompleted} |
+
+<action>
+Update {session_state_file}:
+
+```yaml
+stepsCompleted: [1]  # Step 1 완료
+last_updated: "{timestamp}"
+```
+</action>
 
 #### Menu Handling Logic:
 
-<check if="user selected R in Section 4b (checkpoint restoration)">
-**🔄 체크포인트에서 복원 중...**
+<check if="user selected R in Section 4b (resume)">
+**🔄 저장 지점에서 복원 중...**
 
-저장된 스텝: {current_step}
-진행상황: 체크리스트 {step_progress.checklist_completed} 완료
+🆕 **stepsCompleted 기반 라우팅:**
 
-**저장 지점으로 이동합니다...**
+| stepsCompleted | 다음 스텝 | 설명 |
+|----------------|-----------|------|
+| [1] | step-02-select | 서브태스크 선택 |
+| [1,2] | step-03-context | 컨텍스트 준비 |
+| [1,2,3] | step-04-implement | 구현 (progress.yaml 복원) |
+| [1,2,3,4] | step-05-verify | 검증 |
+| [1,2,3,4,5] | step-06-complete | 완료 처리 |
 
 <action>
-{workflow_path}/steps/{current_step}.md 로드 및 실행
-(Step 2, 3 스킵)
+마지막 완료 스텝 확인 후 다음 스텝 파일 로드:
+
+IF stepsCompleted includes 4 AND session.can_resume:
+  - step-04-implement.md 로드
+  - progress.yaml에서 체크리스트 진행 상태 복원
+ELSE:
+  - stepsCompleted 기반 다음 스텝 로드
 </action>
 </check>
 
-<check if="user selected N in Section 4b OR no checkpoint exists">
+<check if="user selected N in Section 4b OR no previous session">
 **서브태스크 선택 단계로 진행합니다...**
 
 <action>
@@ -217,13 +278,17 @@ PM 에이전트에서 `*decompose` 명령으로 백로그를 분해해주세요.
 - 백로그 ID 확인됨
 - 서브태스크 목록 로드됨
 - 세션 상태 로드/생성됨
-- 체크포인트 존재 시: 사용자 선택에 따라 복원 또는 새 시작
-- 정상 진행: Step 2로 이동 / 복원 진행: 저장된 스텝으로 직접 이동
+- 🆕 stepsCompleted 배열 확인 및 업데이트
+- 🆕 session.can_resume 확인
+- 복원 시: stepsCompleted 기반 올바른 스텝으로 라우팅
+- 정상 진행: Step 2로 이동
 
 ### ❌ SYSTEM FAILURE:
 
 - MCP 체크 없이 진행
 - 서브태스크 없이 진행
 - 세션 상태 처리 누락
+- 🆕 stepsCompleted 무시
+- 🆕 progress.yaml 복원 실패 (can_resume 시)
 
 **Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.

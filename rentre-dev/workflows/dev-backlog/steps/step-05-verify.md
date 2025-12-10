@@ -13,6 +13,8 @@ workflowFile: '{workflow_path}/workflow.yaml'
 
 # Data References
 data_path: '{project-root}/.bmad/rentre-dev/data/backlogs'
+session_state_file: '{data_path}/{backlog_id}/session-state.yaml'
+progress_file: '{data_path}/{backlog_id}/subtasks/{current_subtask_id}/progress.yaml'
 ---
 
 # Step 5: 검증
@@ -186,9 +188,17 @@ Display: **⚠️ 검증 실패** [R] 재구현 | [F] 강제 완료 | [E] E2E �
 - Allow re-implementation loop
 
 #### Menu Handling Logic:
-- IF C: 검증 통과 확인 후 load {nextStepFile}
+- IF C:
+  1. 검증 통과 확인
+  2. 🆕 Update {progress_file}: `status: "verified"`, `tests.passed: true`
+  3. 🆕 Update {session_state_file}: `stepsCompleted: [1, 2, 3, 4, 5]`
+  4. Load {nextStepFile}
 - IF R: load {prevStepFile} for re-implementation
-- IF F: 강제 완료 확인 후 load {nextStepFile}
+- IF F:
+  1. 강제 완료 확인
+  2. 🆕 Update {progress_file}: `status: "force_completed"`
+  3. 🆕 Update {session_state_file}: `stepsCompleted: [1, 2, 3, 4, 5]`
+  4. Load {nextStepFile}
 - IF E: E2E 테스트 실행 후 메뉴 재표시
 - IF Any other: 응답 후 메뉴 재표시
 

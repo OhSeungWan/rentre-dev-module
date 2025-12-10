@@ -1,0 +1,38 @@
+# Subtask Implementation Progress Template
+# This file tracks implementation progress for a single subtask
+# Location: {data_path}/{backlog_id}/subtasks/{subtask_id}/progress.yaml
+
+# Subtask Identification
+subtask_id: ""
+subtask_title: ""
+
+# Progress Status
+status: "pending"  # pending | in_progress | completed | blocked
+
+# Checklist Progress
+checklist:
+  total: 0
+  completed: []      # e.g., [1, 2, 3] - completed item numbers
+  current: 0         # currently working on item number
+
+# File Changes Tracking
+files_changed:
+  # - path: "src/api/endpoint.ts"
+  #   action: "modified"  # created | modified | deleted
+  #   timestamp: ""
+
+# Test Progress
+tests:
+  written: []        # list of test file paths
+  passed: false      # last test run result
+  last_run: ""       # timestamp of last test run
+
+# Timestamps
+started_at: ""
+last_updated: ""
+
+# Save Context
+save_reason: ""      # "user_request" | "checklist_complete" | "file_changed" | "test_written"
+
+# Implementation Notes (optional)
+notes: []

@@ -12,6 +12,7 @@ workflowFile: '{workflow_path}/workflow.yaml'
 
 # Data References
 data_path: '{project-root}/.bmad/rentre-dev/data/backlogs'
+session_state_file: '{data_path}/{backlog_id}/session-state.yaml'
 ---
 
 # Step 3: 컨텍스트 준비
@@ -196,7 +197,9 @@ Display: **컨텍스트 확인 완료.** [C] 구현 시작 | [I] 🆕 상속된 
 
 #### Menu Handling Logic:
 
-- IF C: load {nextStepFile} to start implementation
+- IF C:
+  1. 🆕 Update {session_state_file}: `stepsCompleted: [1, 2, 3]`
+  2. Load {nextStepFile} to start implementation
 - IF I: 🆕 상속된 원본 지시사항 전체 표시 후 메뉴 재표시
 - IF F: Figma 디자인 상세 표시 후 메뉴 재표시
 - IF A: 코드 분석 전체 표시 후 메뉴 재표시

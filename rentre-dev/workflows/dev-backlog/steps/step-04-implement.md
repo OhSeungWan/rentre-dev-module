@@ -12,6 +12,11 @@ workflowFile: '{workflow_path}/workflow.yaml'
 
 # Data References
 data_path: '{project-root}/.bmad/rentre-dev/data/backlogs'
+session_state_file: '{data_path}/{backlog_id}/session-state.yaml'
+
+# 🆕 Progress Tracking
+progress_file: '{data_path}/{backlog_id}/subtasks/{current_subtask_id}/progress.yaml'
+progress_template: '{workflow_path}/templates/progress.yaml'
 ---
 
 # Step 4: 구현 + 테스트
@@ -42,6 +47,7 @@ data_path: '{project-root}/.bmad/rentre-dev/data/backlogs'
 - 🚫 FORBIDDEN to skip test writing
 - 💬 Explain changes as you implement
 - 🚪 Complete both code and tests before proceeding
+- 🆕 💾 **AUTO-SAVE**: Save progress to {progress_file} after each action
 
 ## EXECUTION PROTOCOLS:
 
@@ -49,6 +55,75 @@ data_path: '{project-root}/.bmad/rentre-dev/data/backlogs'
 - 💾 Write vitest tests for new code
 - 📖 Update checklist items as completed
 - 🚫 FORBIDDEN to proceed without tests
+- 🆕 💾 **CRITICAL**: Update {progress_file} after every checklist completion, file change, or test written
+
+---
+
+## 🆕 SECTION 0: Progress State Management
+
+### 0a. Load or Create Progress File
+
+<action>
+1. Check if {progress_file} exists
+2. IF exists: Load progress and restore state
+3. IF not exists: Create from {progress_template}
+</action>
+
+<check if="progress_file exists">
+**🔄 이전 진행 상태 복원**
+
+```yaml
+# Loaded from {progress_file}
+subtask_id: {current_subtask_id}
+status: {status}
+checklist:
+  completed: {completed_items}
+  current: {current_item}
+files_changed: {files_changed_count}개
+tests_written: {tests_count}개
+```
+
+**이어서 진행합니다: 체크리스트 항목 {current_item}부터**
+</check>
+
+<check if="progress_file not exists">
+<action>
+Create {progress_file} from template:
+
+```yaml
+subtask_id: "{current_subtask_id}"
+subtask_title: "{current_subtask_title}"
+status: "in_progress"
+checklist:
+  total: {checklist_total}
+  completed: []
+  current: 1
+files_changed: []
+tests:
+  written: []
+  passed: false
+  last_run: ""
+started_at: "{timestamp}"
+last_updated: "{timestamp}"
+save_reason: "step_started"
+```
+</action>
+
+**🆕 새 구현 시작**
+</check>
+
+### 0b. Auto-Save Protocol
+
+**🔄 자동 저장 트리거:**
+
+| 트리거 | 저장 내용 | 저장 이유 |
+|--------|-----------|-----------|
+| 체크리스트 항목 완료 | `checklist.completed` 업데이트 | `checklist_complete` |
+| 파일 변경 (Edit/Write) | `files_changed` 배열에 추가 | `file_changed` |
+| 테스트 파일 작성 | `tests.written` 배열에 추가 | `test_written` |
+| 사용자 [S] 선택 | 전체 상태 저장 | `user_request` |
+
+---
 
 ## SEQUENCE OF INSTRUCTIONS:
 
@@ -82,7 +157,7 @@ data_path: '{project-root}/.bmad/rentre-dev/data/backlogs'
 
 </check>
 
-### 2. 코드 구현
+### 2. 코드 구현 (with Auto-Save)
 
 각 체크리스트 항목에 대해:
 
@@ -90,7 +165,38 @@ data_path: '{project-root}/.bmad/rentre-dev/data/backlogs'
 1. 관련 파일 읽기 (Read 또는 **Serena MCP** 사용)
 2. 기존 코드 패턴 파악
 3. 수정/추가 코드 작성 (Edit/Write 또는 **Serena MCP** 사용)
-4. 체크리스트 항목 완료 표시
+4. 🆕 **파일 변경 시 즉시 progress.yaml 업데이트**
+5. 체크리스트 항목 완료 표시
+6. 🆕 **체크리스트 완료 시 즉시 progress.yaml 업데이트**
+</action>
+
+#### 🆕 파일 변경 후 자동 저장
+
+<action after="file edit/write">
+Update {progress_file}:
+
+```yaml
+files_changed:
+  - path: "{changed_file_path}"
+    action: "{created|modified|deleted}"
+    timestamp: "{timestamp}"
+last_updated: "{timestamp}"
+save_reason: "file_changed"
+```
+</action>
+
+#### 🆕 체크리스트 항목 완료 후 자동 저장
+
+<action after="checklist item complete">
+Update {progress_file}:
+
+```yaml
+checklist:
+  completed: [{updated_completed_list}]
+  current: {next_item_number}
+last_updated: "{timestamp}"
+save_reason: "checklist_complete"
+```
 </action>
 
 **🔧 Serena MCP 도구 활용 (권장):**
@@ -142,10 +248,7 @@ params:
 - 필요한 곳에 주석 추가
 - 🆕 **상속된 원본 지시사항의 제약조건 준수**
 
-**⚠️ 구현 중 발견사항:**
-{implementation_findings}
-
-### 3. vitest 테스트 작성
+### 3. vitest 테스트 작성 (with Auto-Save)
 
 **🧪 테스트 작성**
 
@@ -155,6 +258,23 @@ params:
    - 정상 동작 테스트
    - 엣지 케이스 테스트
    - 에러 핸들링 테스트
+3. 🆕 **테스트 파일 작성 후 즉시 progress.yaml 업데이트**
+</action>
+
+#### 🆕 테스트 작성 후 자동 저장
+
+<action after="test file written">
+Update {progress_file}:
+
+```yaml
+tests:
+  written:
+    - "{test_file_path}"
+  passed: false
+  last_run: ""
+last_updated: "{timestamp}"
+save_reason: "test_written"
+```
 </action>
 
 **테스트 템플릿:**
@@ -192,25 +312,9 @@ describe('functionName', () => {
 | 체크리스트 3 | ⏳ 대기   |
 | 테스트 작성  | ⏳ 대기   |
 
-### 4b. 컨텍스트 모니터링 (Context Warning)
-
-<check if="context usage > 90%">
-**⚠️ 컨텍스트 경고: 남은 용량이 10% 미만입니다!**
-
-현재 진행상황:
-- 완료된 체크리스트: {completed_items}/{total_items}
-- 변경된 파일: {files_changed}
-- 작성된 테스트: {tests_written}
-
-**선택하세요:**
-| 옵션  | 설명 |
-|-------|------|
-| **[S]** | 세션 저장 후 종료 (권장) |
-| **[I]** | 무시하고 계속 진행 |
-
-<action if="S">세션 저장 처리로 이동</action>
-<action if="I">경고 무시, 구현 계속</action>
-</check>
+**🆕 progress.yaml 상태:**
+- 마지막 저장: {last_updated}
+- 저장 이유: {save_reason}
 
 ### 5. 도움 요청 처리 (H 선택 시)
 
@@ -226,59 +330,73 @@ describe('functionName', () => {
 <action>도움 제공 후 구현 계속</action>
 </check>
 
-### 6. 일시 정지 처리 (P 선택 시)
+### 6. 세션 저장 처리 (S 또는 P 선택 시)
 
-<check if="user wants to pause">
-**⏸️ 구현 일시 정지**
-
-현재까지의 진행상황을 저장합니다:
-
-- 완료된 체크리스트: {completed_items}
-- 작성된 테스트: {test_files}
-- 마지막 작업: {last_action}
-
-<action>세션 상태에 진행상황 저장</action>
-
-다음에 `*continue` 또는 이 워크플로우를 다시 실행하면 이어서 작업할 수 있습니다.
-</check>
-
-### 6b. 세션 저장 처리 (S 선택 시)
-
-<check if="user selects S">
+<check if="user selects S or P">
 **💾 세션 저장**
 
 <action>
-세션 상태 파일 업데이트: {data_path}/{backlog_id}/session-state.yaml
+1. Update {progress_file} with full state:
 
 ```yaml
-current_step: "step-04-implement"
-checkpoint:
-  saved_at: "{timestamp}"
-  reason: "user_request"  # 또는 "context_low"
-  context_remaining: "{remaining_percent}%"
-step_progress:
-  checklist_completed: [{completed_item_numbers}]
-  checklist_total: {total_items}
-  files_changed: [{changed_files_list}]
-  tests_written: [{test_files_list}]
-  current_action: "{current_action_description}"
+subtask_id: "{current_subtask_id}"
+subtask_title: "{current_subtask_title}"
+status: "in_progress"
+checklist:
+  total: {total_items}
+  completed: [{completed_item_numbers}]
+  current: {current_item}
+files_changed:
+  {files_changed_list}
+tests:
+  written: [{test_files_list}]
+  passed: false
+  last_run: ""
+started_at: "{started_at}"
+last_updated: "{timestamp}"
+save_reason: "user_request"
+notes:
+  - "{any_notes}"
+```
+
+2. Update {session_state_file}:
+
+```yaml
+session:
+  last_step: "step-04-implement"
+  can_resume: true
+  current_subtask_id: "{current_subtask_id}"
+last_updated: "{timestamp}"
 ```
 </action>
 
 **✅ 세션이 저장되었습니다.**
 
 **저장된 정보:**
-- 현재 스텝: step-04-implement
-- 완료된 체크리스트: {completed_items}/{total_items}
-- 변경된 파일: {files_changed_count}개
-- 작성된 테스트: {tests_written_count}개
+| 항목 | 값 |
+|------|-----|
+| 현재 스텝 | step-04-implement |
+| 서브태스크 | {current_subtask_id} |
+| 체크리스트 | {completed_count}/{total_items} 완료 |
+| 변경된 파일 | {files_changed_count}개 |
+| 작성된 테스트 | {tests_written_count}개 |
+| 저장 위치 | {progress_file} |
 
 다음 세션에서 `dev-backlog` 워크플로우 실행 시 이 지점에서 이어서 작업합니다.
 
+<check if="S selected">
 **종료하시겠습니까?** [Y] 종료 | [N] 계속 작업
 
 <action if="Y">워크플로우 종료</action>
 <action if="N">구현 계속, 메뉴 재표시</action>
+</check>
+
+<check if="P selected">
+**⏸️ 워크플로우 일시 정지**
+
+다음에 이 워크플로우를 다시 실행하면 이어서 작업할 수 있습니다.
+<action>워크플로우 종료</action>
+</check>
 </check>
 
 ### 7. 구현 완료 확인
@@ -303,6 +421,18 @@ step_progress:
 
 ⚠️ **모든 제약조건이 준수되었는지 확인하세요!**
 </check>
+
+🆕 **progress.yaml 최종 업데이트:**
+
+<action>
+Update {progress_file}:
+
+```yaml
+status: "pending_verification"
+last_updated: "{timestamp}"
+save_reason: "implementation_complete"
+```
+</action>
 </check>
 
 <check if="implementation incomplete">
@@ -321,19 +451,25 @@ Display: **구현 상태:** [C] 검증으로 진행 | [S] 세션 저장 | [H] �
 - ALWAYS halt and wait for user input after presenting menu
 - Check implementation completeness before allowing C
 - After help, save, or pause, return to implementation or exit as appropriate
-- Monitor context usage and show warning if > 90%
+- 🆕 Progress is auto-saved, so user can safely exit anytime
 
 #### Menu Handling Logic:
 
-- IF C: 구현 완료 확인 후 load {nextStepFile}
-- IF S: 세션 저장 처리 (Section 6b) 실행, 종료 여부 확인
+- IF C:
+  1. 🆕 Update {session_state_file}: `stepsCompleted: [1, 2, 3, 4]`
+  2. 🆕 Update {progress_file}: `status: "pending_verification"`
+  3. Load {nextStepFile}
+- IF S: 세션 저장 처리 (Section 6) 실행, 종료 여부 확인
 - IF H: 도움 제공 후 구현 계속, 메뉴 재표시
 - IF P: 세션 저장 후 워크플로우 일시 정지
 - IF Any other: 응답 후 메뉴 재표시
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected AND implementation is complete (code + tests) will you load {nextStepFile} for verification.
+ONLY WHEN C is selected AND implementation is complete (code + tests) will you:
+1. 🆕 Update {session_state_file} with `stepsCompleted: [1, 2, 3, 4]`
+2. 🆕 Update {progress_file} with `status: "pending_verification"`
+3. Load {nextStepFile} for verification.
 
 ---
 
@@ -344,13 +480,15 @@ ONLY WHEN C is selected AND implementation is complete (code + tests) will you l
 - 모든 체크리스트 항목 구현됨
 - vitest 테스트 작성됨
 - 기존 코드 패턴 준수
-- 진행상황 저장됨
+- 🆕 progress.yaml에 진행상황 자동 저장됨
+- 🆕 stepsCompleted 업데이트됨
 
 ### ❌ SYSTEM FAILURE:
 
 - 테스트 없이 진행
 - 체크리스트 무시
 - 기존 패턴 무시
-- 진행상황 미저장
+- 🆕 progress.yaml 저장 누락
+- 🆕 stepsCompleted 업데이트 누락
 
 **Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.

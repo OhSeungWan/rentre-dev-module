@@ -1,11 +1,17 @@
 # Dev Backlog Session State Template
 # This file tracks workflow progress across sessions
+# Location: {data_path}/{backlog_id}/session-state.yaml
 
 # Backlog Information
 backlog_id: ""
 backlog_title: ""
 
-# Progress Tracking
+# 🆕 Step Completion Tracking (stepsCompleted pattern)
+# Used for session resumption - determines which step to resume from
+# [1] = init, [2] = select, [3] = context, [4] = implement, [5] = verify, [6] = complete
+stepsCompleted: []
+
+# Subtask Progress Tracking
 current_subtask: 1
 completed_subtasks: []
 total_subtasks: 0
@@ -29,21 +35,8 @@ mcp_status:
 # Implementation Notes
 notes: []
 
-# === Session Checkpoint (NEW) ===
-
-# Current workflow step for restoration
-current_step: ""  # e.g., "step-04-implement"
-
-# Checkpoint information
-checkpoint:
-  saved_at: ""
-  reason: ""  # "context_low" | "user_request" | "step_complete"
-  context_remaining: ""  # e.g., "8%"
-
-# Step 4 (Implementation) progress tracking
-step_progress:
-  checklist_completed: []  # e.g., [1, 2, 3]
-  checklist_total: 0
-  files_changed: []
-  tests_written: []
-  current_action: ""  # e.g., "Implementing: API endpoint"
+# 🆕 Session Resume Info (simplified)
+session:
+  last_step: ""        # e.g., "step-04-implement"
+  can_resume: false    # true if mid-step progress exists
+  current_subtask_id: ""  # subtask being worked on

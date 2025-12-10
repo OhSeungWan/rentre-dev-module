@@ -12,6 +12,7 @@ workflowFile: '{workflow_path}/workflow.yaml'
 
 # Data References
 data_path: '{project-root}/.bmad/rentre-dev/data/backlogs'
+session_state_file: '{data_path}/{backlog_id}/session-state.yaml'
 ---
 
 # Step 2: 서브태스크 선택
@@ -137,7 +138,10 @@ Display: **서브태스크를 선택하세요:** [번호] 선택 | [S] Sub-agent
 
 #### Menu Handling Logic:
 
-- IF [번호]: 해당 서브태스크 선택 후 load {nextStepFile}
+- IF [번호]:
+  1. 해당 서브태스크 선택
+  2. 🆕 Update {session_state_file}: `stepsCompleted: [1, 2]`
+  3. Load {nextStepFile}
 - IF S: Sub-agent 모드 실행 후 step-06-complete.md로 이동
 - IF R: 서브태스크 목록 새로고침 후 메뉴 재표시
 - IF Q: 세션 저장 후 워크플로우 종료
