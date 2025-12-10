@@ -1,9 +1,11 @@
 ---
 name: 'step-03-code-analysis'
-description: '코드베이스 분석 (선택적)'
+description: '코드베이스 분석 (선택적) - analyze-codebase 워크플로우 호출'
 
 # Path Definitions
 workflow_path: '{module_path}/workflows/decompose-backlog'
+data_path: '{module_path}/data'
+backlogs_folder: '{data_path}/backlogs'
 
 # File References
 thisStepFile: '{workflow_path}/steps/step-03-code-analysis.md'
@@ -11,8 +13,13 @@ nextStepFile: '{workflow_path}/steps/step-04-config.md'
 previousStepFile: '{workflow_path}/steps/step-02-select-backlog.md'
 workflowFile: '{workflow_path}/workflow.md'
 
+# Session State (step-02에서 생성됨)
+backlog_folder: '{backlogs_folder}/{backlog_id}'
+decompose_state_file: '{backlog_folder}/decompose.yaml'
+code_analysis_file: '{backlog_folder}/code-analysis.md'
+
 # Workflow References
-analyze_codebase_workflow: '{module_path}/workflows/analyze-codebase/workflow.yaml'
+analyze_codebase_workflow: '{module_path}/workflows/analyze-codebase/workflow.md'
 ---
 
 # Step 3: 코드베이스 분석 (선택적)
@@ -65,9 +72,23 @@ analyze_codebase_workflow: '{module_path}/workflows/analyze-codebase/workflow.ya
 
 ## Sequence of Instructions (Do not deviate, skip, or optimize)
 
+### 0. decompose.yaml 로드 (CRITICAL - 컨텍스트 복원)
+
+스텝 시작 시 `{decompose_state_file}` 로드:
+
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - 이전 스텝 결과 확인:
+    - backlog_id, stepsCompleted
+    - guides (step 1)
+    - selected_backlog (step 2)
+  - 메모리에 컨텍스트 복원
+```
+
 ### 1. 기존 코드 분석 결과 확인
 
-`{backlog_folder}/code-analysis.md` 존재 여부 확인:
+`{code_analysis_file}` 존재 여부 확인:
 
 **기존 분석이 있는 경우:**
 
@@ -174,17 +195,44 @@ params:
 >
 > ━━━━━━━━━━━━━━━━━━━━━━━"
 
-### 4. 분석 결과 저장
+### 4. 분석 결과 저장 (analyze-codebase가 생성)
 
-코드 분석 결과를 `{backlog_folder}/code-analysis.md`에 저장
+**NOTE:** analyze-codebase 워크플로우가 `{code_analysis_file}`을 직접 생성합니다.
 
-### 5. Present MENU OPTIONS
+### 5. decompose.yaml 업데이트 (CRITICAL - 컨텍스트 유실 방지)
+
+`{decompose_state_file}` 업데이트:
+
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - code_analysis 섹션 추가/업데이트:
+      performed: true/false
+      result_file: "code-analysis.md"  # analyze-codebase가 생성한 파일
+      analysis_date: "{timestamp}"
+      skipped_reason: "{reason}"  # 건너뛴 경우
+  - stepsCompleted: [1, 2, 3] 업데이트
+  - updated_at: "{timestamp}" 업데이트
+  - 파일 저장
+
+# decompose.yaml에 추가될 내용
+code_analysis:
+  performed: true  # 또는 false (건너뛴 경우)
+  result_file: "code-analysis.md"
+  analysis_date: "2025-12-10"
+```
+
+**저장 확인 메시지:**
+
+> "✅ decompose.yaml 업데이트 완료 (step 3)"
+
+### 6. Present MENU OPTIONS
 
 Display: "**Select an Option:** [C] Continue - 분해 설정으로 진행 [A] Analyze - 코드 분석 (재)수행 [B] Back - 백로그 선택으로 돌아가기 [X] Exit - 종료"
 
 #### Menu Handling Logic:
 
-- IF C: Update frontmatter `stepsCompleted: [1, 2, 3]`, then load, read entire file, then execute {nextStepFile}
+- IF C: Verify decompose.yaml saved with stepsCompleted: [1,2,3], then load, read entire file, then execute {nextStepFile}
 - IF A: Re-execute from section 3
 - IF B: Load, read entire file, then execute {previousStepFile}
 - IF X: End workflow with summary

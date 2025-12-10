@@ -1,16 +1,22 @@
 ---
 name: 'step-07-save'
-description: '하위 백로그 저장'
+description: '하위 백로그 저장 - decompose.yaml에서 children 읽어 파일 생성'
 
 # Path Definitions
 workflow_path: '{module_path}/workflows/decompose-backlog'
+data_path: '{module_path}/data'
+backlogs_folder: '{data_path}/backlogs'
 
 # File References
 thisStepFile: '{workflow_path}/steps/step-07-save.md'
 nextStepFile: '{workflow_path}/steps/step-08-complete.md'
 previousStepFile: '{workflow_path}/steps/step-06-verify.md'
 workflowFile: '{workflow_path}/workflow.md'
-data_path: '{module_path}/data'
+
+# Session State
+backlog_folder: '{backlogs_folder}/{backlog_id}'
+decompose_state_file: '{backlog_folder}/decompose.yaml'
+children_folder: '{backlog_folder}/children'
 ---
 
 # Step 7: 하위 백로그 저장
@@ -63,6 +69,25 @@ data_path: '{module_path}/data'
 ---
 
 ## Sequence of Instructions (Do not deviate, skip, or optimize)
+
+### 0. decompose.yaml 로드 (CRITICAL - 컨텍스트 복원)
+
+스텝 시작 시 `{decompose_state_file}` 로드:
+
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - 이전 스텝 결과 확인:
+    - backlog_id, stepsCompleted
+    - selected_backlog (step 2)
+    - children (step 5) - 저장할 하위 백로그 데이터
+    - verification (step 6) - 검증 통과 여부
+  - 메모리에 컨텍스트 복원
+
+check: verification.passed == true
+  - true: 저장 진행
+  - false: 경고 표시 후 사용자 확인 요청
+```
 
 ### 1. 저장 위치 선택
 
@@ -268,13 +293,42 @@ action:
 >
 > ━━━━━━━━━━━━━━━━━━━━━━━"
 
-### 6. Present MENU OPTIONS
+### 6. decompose.yaml 최종 업데이트 (CRITICAL)
+
+`{decompose_state_file}` 업데이트:
+
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - save_result 섹션 추가:
+      local_saved: true/false
+      local_path: "{children_folder}"
+      notion_saved: true/false
+      notion_page_ids: [...]
+      saved_at: "{timestamp}"
+  - stepsCompleted: [1, 2, 3, 4, 5, 6, 7] 업데이트
+  - updated_at: "{timestamp}" 업데이트
+  - 파일 저장
+
+# decompose.yaml에 추가될 내용
+save_result:
+  local_saved: true
+  local_path: "{backlog_folder}/children"
+  notion_saved: false
+  saved_at: "2025-12-10"
+```
+
+**저장 확인 메시지:**
+
+> "✅ decompose.yaml 최종 업데이트 완료 (step 7)"
+
+### 7. Present MENU OPTIONS
 
 Display: "**Select an Option:** [C] Continue - 완료 요약으로 진행 [V] Verify - 저장된 파일 확인 [S] Save Again - 다른 위치에 추가 저장 [B] Back - 검증 단계로 돌아가기 [X] Exit - 종료"
 
 #### Menu Handling Logic:
 
-- IF C: Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5, 6, 7]`, then load, read entire file, then execute {nextStepFile}
+- IF C: Verify decompose.yaml saved with stepsCompleted: [1,2,3,4,5,6,7], then load, read entire file, then execute {nextStepFile}
 - IF V: Display saved files content
 - IF S: Re-execute from section 1
 - IF B: Load, read entire file, then execute {previousStepFile}

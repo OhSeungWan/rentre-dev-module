@@ -4,12 +4,18 @@ description: '추적성 기반 백로그 분해'
 
 # Path Definitions
 workflow_path: '{module_path}/workflows/decompose-backlog'
+data_path: '{module_path}/data'
+backlogs_folder: '{data_path}/backlogs'
 
 # File References
 thisStepFile: '{workflow_path}/steps/step-05-decompose.md'
 nextStepFile: '{workflow_path}/steps/step-06-verify.md'
 previousStepFile: '{workflow_path}/steps/step-04-config.md'
 workflowFile: '{workflow_path}/workflow.md'
+
+# Session State
+backlog_folder: '{backlogs_folder}/{backlog_id}'
+decompose_state_file: '{backlog_folder}/decompose.yaml'
 ---
 
 # Step 5: 추적성 기반 백로그 분해
@@ -61,6 +67,22 @@ workflowFile: '{workflow_path}/workflow.md'
 ---
 
 ## Sequence of Instructions (Do not deviate, skip, or optimize)
+
+### 0. decompose.yaml 로드 (CRITICAL - 컨텍스트 복원)
+
+스텝 시작 시 `{decompose_state_file}` 로드:
+
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - 이전 스텝 결과 확인:
+    - backlog_id, stepsCompleted
+    - selected_backlog (step 2) - content_blocks, requirements, acceptance_criteria
+    - code_analysis (step 3) - target_files, implementation_notes
+    - config (step 4) - target_child_type, detail_level
+  - 메모리에 컨텍스트 복원
+  - backlog-info.yaml에서 상세 데이터 로드 (content_blocks 등)
+```
 
 ### 1. 분해 계획 수립
 
@@ -264,13 +286,53 @@ children:
     # ... similar structure with covers, inherited_content, siblings
 ```
 
-### 5. Present MENU OPTIONS
+### 5. decompose.yaml 업데이트 (CRITICAL - 컨텍스트 유실 방지)
+
+`{decompose_state_file}` 업데이트:
+
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - children 섹션 추가/업데이트 (전체 하위 백로그 데이터)
+  - stepsCompleted: [1, 2, 3, 4, 5] 업데이트
+  - updated_at: "{timestamp}" 업데이트
+  - 파일 저장
+
+# decompose.yaml에 추가될 내용
+children:
+  - id: "TASK-001"
+    title: "태스크 제목"
+    type: "Task"
+    description: "설명..."
+    covers:
+      - block_id: "BLK-001"
+        coverage: "full"
+    inherited_content:
+      - block_id: "BLK-001"
+        block_type: "instruction"
+        full_text: "원본 내용..."
+    siblings:
+      - id: "TASK-002"
+        relationship: "independent"
+    traceability:
+      requirements: [REQ-001]
+      acceptance_criteria: [AC-001]
+    code_context:
+      target_files: ["src/..."]
+  # ... 추가 children
+```
+
+**저장 확인 메시지:**
+
+> "✅ decompose.yaml 업데이트 완료 (step 5) - {children_count}개 하위 백로그 저장됨"
+
+### 6. Present MENU OPTIONS
 
 Display: "**Select an Option:** [C] Continue - 추적성 검증으로 진행 [E] Edit - 특정 하위 백로그 수정 [A] Add - 하위 백로그 추가 [D] Delete - 하위 백로그 삭제 [R] Regenerate - 분해 다시 수행 [B] Back - 분해 설정으로 돌아가기 [X] Exit - 종료"
 
 #### Menu Handling Logic:
 
-- IF C: Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5]`, then load, read entire file, then execute {nextStepFile}
+- IF C: Verify decompose.yaml saved with stepsCompleted: [1,2,3,4,5], then load, read entire file, then execute {nextStepFile}
 - IF E: Edit selected child backlog, then re-display
 - IF A: Add new child backlog, then re-display
 - IF D: Delete selected child backlog, then re-display

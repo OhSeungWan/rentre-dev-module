@@ -16,6 +16,7 @@ guides_folder: '{module_path}/data/guides'
 hierarchy_guide: '{guides_folder}/hierarchy-map.md'
 summary_guide: '{guides_folder}/backlog-guide-summary.md'
 data_path: '{module_path}/data'
+backlogs_folder: '{data_path}/backlogs'
 ---
 
 # Step 1: 가이드 파일 로드 및 사전 조건 확인
@@ -69,21 +70,28 @@ data_path: '{module_path}/data'
 
 ## Sequence of Instructions (Do not deviate, skip, or optimize)
 
-### 1. 기존 워크플로우 확인
+### 1. 기존 분해 작업 확인 (decompose.yaml 기반)
 
-먼저 출력 폴더에 기존 분해 작업이 있는지 확인:
+`{backlogs_folder}` 내에서 진행 중인 분해 작업 확인:
 
-- `{data_path}/backlogs` 내 분해 중인 백로그 폴더 확인
-- 있으면 frontmatter의 `stepsCompleted` 확인
-- 재개가 필요하면 `{continueStepFile}` 로드
+```yaml
+action:
+  - {backlogs_folder} 스캔
+  - 각 백로그 폴더에서 decompose.yaml 존재 확인
+  - decompose.yaml이 있고 stepsCompleted가 [1,2,3,4,5,6,7,8] 미만이면 → 진행 중인 작업
 
-### 2. 재개 처리 (문서 존재 시)
+check: 진행 중인 decompose.yaml 발견
+  - 사용자에게 알림: "기존 분해 작업이 발견되었습니다: {backlog_id}"
+  - 재개 여부 질문
+```
 
-문서가 존재하고 frontmatter에 `stepsCompleted`가 있으면:
+### 2. 재개 처리 (decompose.yaml 존재 시)
 
-- **STOP** 여기서 멈추고 `{continueStepFile}` 즉시 로드
-- 초기화 작업 진행하지 않음
-- step-01b가 재개 로직 처리
+진행 중인 decompose.yaml이 발견되면:
+
+- 사용자에게 질문: "기존 분해 작업을 이어서 진행하시겠습니까? (y/n)"
+- **y**: `{continueStepFile}` 로드 (backlog_id 전달)
+- **n**: 새 분해 작업 시작 (섹션 3으로 진행)
 
 ### 3. 가이드 파일 확인 및 로드 (신규 워크플로우)
 

@@ -1,15 +1,21 @@
 ---
 name: 'step-02-select-backlog'
-description: '백로그 선택 및 준비 상태 확인'
+description: '백로그 선택 및 준비 상태 확인 + decompose.yaml 생성'
 
 # Path Definitions
 workflow_path: '{module_path}/workflows/decompose-backlog'
+data_path: '{module_path}/data'
+backlogs_folder: '{data_path}/backlogs'
 
 # File References
 thisStepFile: '{workflow_path}/steps/step-02-select-backlog.md'
 nextStepFile: '{workflow_path}/steps/step-03-code-analysis.md'
 previousStepFile: '{workflow_path}/steps/step-01-load-guides.md'
 workflowFile: '{workflow_path}/workflow.md'
+
+# Session State (backlog_id 결정 후 설정)
+backlog_folder: '{backlogs_folder}/{backlog_id}'
+decompose_state_file: '{backlog_folder}/decompose.yaml'
 
 # Workflow References
 prepare_backlog_workflow: '{module_path}/workflows/prepare-backlog/workflow.yaml'
@@ -164,13 +170,53 @@ action:
 >
 > ━━━━━━━━━━━━━━━━━━━━━━━"
 
-### 4. Present MENU OPTIONS
+### 4. decompose.yaml 생성/업데이트 (CRITICAL - 컨텍스트 유실 방지)
+
+백로그 선택 완료 후, `{decompose_state_file}` 생성 또는 업데이트:
+
+```yaml
+# {decompose_state_file} 생성
+---
+backlog_id: "{backlog_id}"
+stepsCompleted: [1, 2]
+created_at: "{timestamp}"
+updated_at: "{timestamp}"
+
+# Step 1 결과: 가이드 로드 (step-01에서 수집)
+guides:
+  hierarchy_loaded: true
+  hierarchy_path: "{guides_folder}/hierarchy-map.md"
+  summary_path: "{guides_folder}/backlog-guide-summary.md"
+  available_decompose_paths:
+    - Epic → Story
+    - Story → Task, Bug
+    - Task → Subtask
+
+# Step 2 결과: 백로그 선택
+selected_backlog:
+  id: "{backlog_id}"
+  title: "{backlog_title}"
+  type: "{backlog_type}"
+  schema_version: "2.0"
+  content_blocks_count: {block_count}
+  requirements_count: {req_count}
+  acceptance_criteria_count: {ac_count}
+  figma_url: "{figma_url}"
+  parent_id: "{parent_id}"
+```
+
+**저장 확인 메시지:**
+
+> "✅ decompose.yaml 저장 완료: `{decompose_state_file}`
+> 컨텍스트가 유실되어도 이 파일에서 복원할 수 있습니다."
+
+### 5. Present MENU OPTIONS
 
 Display: "**Select an Option:** [C] Continue - 코드 분석으로 진행 [P] Prepare - 백로그 다시 준비 [B] Back - 가이드 로드로 돌아가기 [X] Exit - 종료"
 
 #### Menu Handling Logic:
 
-- IF C: Update frontmatter `stepsCompleted: [1, 2]`, then load, read entire file, then execute {nextStepFile}
+- IF C: Verify decompose.yaml saved, then load, read entire file, then execute {nextStepFile}
 - IF P: Re-execute from section 2
 - IF B: Load, read entire file, then execute {previousStepFile}
 - IF X: End workflow with summary

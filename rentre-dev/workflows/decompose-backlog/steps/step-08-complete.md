@@ -4,10 +4,16 @@ description: '완료 요약 및 Dev handoff'
 
 # Path Definitions
 workflow_path: '{module_path}/workflows/decompose-backlog'
+data_path: '{module_path}/data'
+backlogs_folder: '{data_path}/backlogs'
 
 # File References
 thisStepFile: '{workflow_path}/steps/step-08-complete.md'
 workflowFile: '{workflow_path}/workflow.md'
+
+# Session State
+backlog_folder: '{backlogs_folder}/{backlog_id}'
+decompose_state_file: '{backlog_folder}/decompose.yaml'
 
 # Step References for Re-decompose
 step02File: '{workflow_path}/steps/step-02-select-backlog.md'
@@ -62,6 +68,22 @@ step02File: '{workflow_path}/steps/step-02-select-backlog.md'
 ---
 
 ## Sequence of Instructions (Do not deviate, skip, or optimize)
+
+### 0. decompose.yaml 로드 (CRITICAL - 최종 컨텍스트 복원)
+
+스텝 시작 시 `{decompose_state_file}` 로드:
+
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - 전체 워크플로우 결과 확인:
+    - backlog_id, stepsCompleted
+    - selected_backlog (step 2)
+    - children (step 5) - 생성된 하위 백로그
+    - verification (step 6) - 커버리지 메트릭
+    - save_result (step 7) - 저장 위치
+  - 메모리에 컨텍스트 복원
+```
 
 ### 1. 완료 요약 표시
 
@@ -249,7 +271,22 @@ action:
 
 ## CRITICAL STEP COMPLETION NOTE
 
-Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]` to mark workflow as complete.
+decompose.yaml 최종 업데이트:
+
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8] 업데이트
+  - status: "completed" 추가
+  - completed_at: "{timestamp}" 추가
+  - updated_at: "{timestamp}" 업데이트
+  - 파일 저장
+
+# decompose.yaml 최종 상태
+status: "completed"
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
+completed_at: "2025-12-10"
+```
 
 This is the final step of the decompose-backlog workflow. The workflow ends here unless the user chooses to continue with another decomposition or Dev handoff.
 

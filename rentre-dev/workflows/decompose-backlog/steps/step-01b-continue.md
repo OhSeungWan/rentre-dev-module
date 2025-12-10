@@ -1,13 +1,19 @@
 ---
 name: 'step-01b-continue'
-description: '워크플로우 재개 처리'
+description: '워크플로우 재개 처리 - decompose.yaml 기반'
 
 # Path Definitions
 workflow_path: '{module_path}/workflows/decompose-backlog'
+data_path: '{module_path}/data'
+backlogs_folder: '{data_path}/backlogs'
 
 # File References
 thisStepFile: '{workflow_path}/steps/step-01b-continue.md'
 workflowFile: '{workflow_path}/workflow.md'
+
+# Session State (step-01에서 전달받음)
+backlog_folder: '{backlogs_folder}/{backlog_id}'
+decompose_state_file: '{backlog_folder}/decompose.yaml'
 
 # Step References for Resume Routing
 step02File: '{workflow_path}/steps/step-02-select-backlog.md'
@@ -70,31 +76,48 @@ step01File: '{workflow_path}/steps/step-01-load-guides.md'
 
 ## Sequence of Instructions (Do not deviate, skip, or optimize)
 
-### 1. 문서 상태 분석
+### 1. decompose.yaml 로드 및 상태 분석
 
-분해 중인 백로그 폴더에서:
+`{decompose_state_file}` 로드:
 
-1. `decompose-progress.yaml` 또는 관련 진행 파일 로드
-2. frontmatter의 `stepsCompleted` 배열 확인
-3. 마지막 완료 스텝 번호 파악: `{last_step}`
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - stepsCompleted 배열 확인
+  - 마지막 완료 스텝 번호 파악: last_step = stepsCompleted[-1]
+  - 각 섹션의 데이터 복원:
+    - guides (step 1)
+    - selected_backlog (step 2)
+    - code_analysis (step 3)
+    - config (step 4)
+    - children (step 5)
+    - verification (step 6)
+```
 
-### 2. 컨텍스트 복구
+### 2. 컨텍스트 복구 및 표시
 
-이전 세션에서 수집된 정보 표시:
+decompose.yaml에서 복원된 정보 표시:
 
-> "**🔄 이전 분해 작업 발견!**
+> "**🔄 이전 분해 작업 발견! (decompose.yaml 기반)**
 >
 > ━━━━━━━━━━━━━━━━━━━━━━━
 >
-> **백로그:** {backlog_type} - {backlog_title}
+> **백로그 ID:** {backlog_id}
+> **백로그:** {selected_backlog.type} - {selected_backlog.title}
 > **완료된 스텝:** {stepsCompleted}
 > **마지막 완료:** Step {last_step}
+> **다음 스텝:** Step {last_step + 1}
 >
-> **수집된 정보:**
+> **저장된 데이터:**
 >
-> - 계층 구조: {hierarchy_loaded}
-> - 코드 분석: {code_analysis_status}
-> - 분해 설정: {decompose_config}
+> | 섹션 | 상태 | 내용 |
+> |------|------|------|
+> | guides | {1 in stepsCompleted ? '✅' : '❌'} | 가이드 로드됨 |
+> | selected_backlog | {2 in stepsCompleted ? '✅' : '❌'} | {selected_backlog.title} |
+> | code_analysis | {3 in stepsCompleted ? '✅' : '❌'} | {code_analysis.performed ? '분석 완료' : '건너뜀'} |
+> | config | {4 in stepsCompleted ? '✅' : '❌'} | {config.target_child_type} / {config.detail_level} |
+> | children | {5 in stepsCompleted ? '✅' : '❌'} | {children.length}개 생성 |
+> | verification | {6 in stepsCompleted ? '✅' : '❌'} | {verification.passed ? '검증 통과' : '검증 필요'} |
 >
 > ━━━━━━━━━━━━━━━━━━━━━━━"
 

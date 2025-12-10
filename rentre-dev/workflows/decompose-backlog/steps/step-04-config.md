@@ -4,12 +4,18 @@ description: '분해 대상 유형 및 강도 선택'
 
 # Path Definitions
 workflow_path: '{module_path}/workflows/decompose-backlog'
+data_path: '{module_path}/data'
+backlogs_folder: '{data_path}/backlogs'
 
 # File References
 thisStepFile: '{workflow_path}/steps/step-04-config.md'
 nextStepFile: '{workflow_path}/steps/step-05-decompose.md'
 previousStepFile: '{workflow_path}/steps/step-03-code-analysis.md'
 workflowFile: '{workflow_path}/workflow.md'
+
+# Session State
+backlog_folder: '{backlogs_folder}/{backlog_id}'
+decompose_state_file: '{backlog_folder}/decompose.yaml'
 ---
 
 # Step 4: 분해 대상 유형 및 강도 선택
@@ -61,6 +67,21 @@ workflowFile: '{workflow_path}/workflow.md'
 ---
 
 ## Sequence of Instructions (Do not deviate, skip, or optimize)
+
+### 0. decompose.yaml 로드 (CRITICAL - 컨텍스트 복원)
+
+스텝 시작 시 `{decompose_state_file}` 로드:
+
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - 이전 스텝 결과 확인:
+    - backlog_id, stepsCompleted
+    - guides (step 1)
+    - selected_backlog (step 2) - backlog_type 참조
+    - code_analysis (step 3)
+  - 메모리에 컨텍스트 복원
+```
 
 ### 1. 하위 유형 결정
 
@@ -156,13 +177,41 @@ code_analysis_available: { true/false }
 >
 > 다음 단계에서 실제 분해를 수행합니다."
 
-### 4. Present MENU OPTIONS
+### 4. decompose.yaml 업데이트 (CRITICAL - 컨텍스트 유실 방지)
+
+`{decompose_state_file}` 업데이트:
+
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - config 섹션 추가/업데이트:
+      target_child_type: "{selected_child_type}"
+      detail_level: "{selected_detail_level}"
+      estimated_children: {estimated_count}
+      code_analysis_available: true/false
+  - stepsCompleted: [1, 2, 3, 4] 업데이트
+  - updated_at: "{timestamp}" 업데이트
+  - 파일 저장
+
+# decompose.yaml에 추가될 내용
+config:
+  target_child_type: "Task"
+  detail_level: "standard"
+  estimated_children: 5
+  code_analysis_available: true
+```
+
+**저장 확인 메시지:**
+
+> "✅ decompose.yaml 업데이트 완료 (step 4)"
+
+### 5. Present MENU OPTIONS
 
 Display: "**Select an Option:** [C] Continue - 분해 수행으로 진행 [R] Reconfigure - 설정 다시 선택 [B] Back - 코드 분석으로 돌아가기 [X] Exit - 종료"
 
 #### Menu Handling Logic:
 
-- IF C: Update frontmatter `stepsCompleted: [1, 2, 3, 4]`, then load, read entire file, then execute {nextStepFile}
+- IF C: Verify decompose.yaml saved with stepsCompleted: [1,2,3,4], then load, read entire file, then execute {nextStepFile}
 - IF R: Re-execute from section 1
 - IF B: Load, read entire file, then execute {previousStepFile}
 - IF X: End workflow with summary

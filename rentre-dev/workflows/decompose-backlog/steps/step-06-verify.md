@@ -1,15 +1,21 @@
 ---
 name: 'step-06-verify'
-description: '추적성 검증 - 누락 확인'
+description: '추적성 검증 - 블록 커버리지 검증'
 
 # Path Definitions
 workflow_path: '{module_path}/workflows/decompose-backlog'
+data_path: '{module_path}/data'
+backlogs_folder: '{data_path}/backlogs'
 
 # File References
 thisStepFile: '{workflow_path}/steps/step-06-verify.md'
 nextStepFile: '{workflow_path}/steps/step-07-save.md'
 previousStepFile: '{workflow_path}/steps/step-05-decompose.md'
 workflowFile: '{workflow_path}/workflow.md'
+
+# Session State
+backlog_folder: '{backlogs_folder}/{backlog_id}'
+decompose_state_file: '{backlog_folder}/decompose.yaml'
 ---
 
 # Step 6: 추적성 검증 - 블록 커버리지 검증
@@ -63,6 +69,21 @@ workflowFile: '{workflow_path}/workflow.md'
 ---
 
 ## Sequence of Instructions (Do not deviate, skip, or optimize)
+
+### 0. decompose.yaml 로드 (CRITICAL - 컨텍스트 복원)
+
+스텝 시작 시 `{decompose_state_file}` 로드:
+
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - 이전 스텝 결과 확인:
+    - backlog_id, stepsCompleted
+    - selected_backlog (step 2) - content_blocks 정보
+    - children (step 5) - 분해된 하위 백로그들
+  - 메모리에 컨텍스트 복원
+  - backlog-info.yaml에서 content_blocks, requirements, acceptance_criteria 로드
+```
 
 ### 1. 블록 커버리지 검증 (핵심!)
 
@@ -211,13 +232,49 @@ for each AC-XXX in acceptance_criteria:
 
 **Wait for user response.**
 
-### 5. Present MENU OPTIONS
+### 5. decompose.yaml 업데이트 (CRITICAL - 컨텍스트 유실 방지)
+
+`{decompose_state_file}` 업데이트:
+
+```yaml
+action:
+  - {decompose_state_file} 로드
+  - verification 섹션 추가/업데이트
+  - stepsCompleted: [1, 2, 3, 4, 5, 6] 업데이트
+  - updated_at: "{timestamp}" 업데이트
+  - 파일 저장
+
+# decompose.yaml에 추가될 내용
+verification:
+  block_coverage:
+    total: 5
+    covered: 5
+    percent: 100
+    uncovered: []
+    shared: ["BLK-004"]
+  requirements_coverage:
+    total: 3
+    covered: 3
+    percent: 100
+  acceptance_criteria_coverage:
+    total: 4
+    covered: 4
+    percent: 100
+  passed: true
+  excluded_items: []
+```
+
+**저장 확인 메시지:**
+
+> "✅ decompose.yaml 업데이트 완료 (step 6) - 검증 결과 저장됨"
+
+### 6. Present MENU OPTIONS
 
 Display: "**Select an Option:** [C] Continue - 저장으로 진행 [F] Fix - 누락 항목 처리 [E] Edit - 하위 백로그 수정 [R] Regenerate - 분해 다시 수행 [B] Back - 분해 단계로 돌아가기 [X] Exit - 종료"
 
 #### Menu Handling Logic:
 
-- IF C: Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5, 6]`, then load, read entire file, then execute {nextStepFile}
+- IF C: Verify decompose.yaml saved with stepsCompleted: [1,2,3,4,5,6], then load, read entire file, then execute {nextStepFile}
 - IF F: Execute section 3
 - IF E: Edit selected child backlog, then re-verify
 - IF R: Load, read entire file, then execute {previousStepFile}
