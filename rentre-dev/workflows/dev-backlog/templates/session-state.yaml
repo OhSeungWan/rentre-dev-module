@@ -28,3 +28,22 @@ mcp_status:
 
 # Implementation Notes
 notes: []
+
+# === Session Checkpoint (NEW) ===
+
+# Current workflow step for restoration
+current_step: ""  # e.g., "step-04-implement"
+
+# Checkpoint information
+checkpoint:
+  saved_at: ""
+  reason: ""  # "context_low" | "user_request" | "step_complete"
+  context_remaining: ""  # e.g., "8%"
+
+# Step 4 (Implementation) progress tracking
+step_progress:
+  checklist_completed: []  # e.g., [1, 2, 3]
+  checklist_total: 0
+  files_changed: []
+  tests_written: []
+  current_action: ""  # e.g., "Implementing: API endpoint"

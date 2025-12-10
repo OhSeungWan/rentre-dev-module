@@ -43,7 +43,7 @@ This uses **step-file architecture** for disciplined execution:
 - **Micro-file Design**: Each step is a self contained instruction file that is a part of an overall workflow that must be followed exactly
 - **Just-In-Time Loading**: Only the current step file is in memory - never load future step files until told to do so
 - **Sequential Enforcement**: Sequence within the step files must be completed in order, no skipping or optimization allowed
-- **State Tracking**: Document progress in backlog file frontmatter using status and workflow state
+- **State Tracking**: Document progress in output file frontmatter using `stepsCompleted` array when a workflow produces a document
 - **Append-Only Building**: Build backlog documents by appending content as directed to the output file
 
 ### Step Processing Rules
@@ -52,7 +52,7 @@ This uses **step-file architecture** for disciplined execution:
 2. **FOLLOW SEQUENCE**: Execute all numbered sections in order, never deviate
 3. **WAIT FOR INPUT**: If a menu is presented, halt and wait for user selection
 4. **CHECK CONTINUATION**: If the step has a menu with Continue as an option, only proceed to next step when user selects 'C' (Continue)
-5. **SAVE STATE**: Update backlog status before loading next step
+5. **SAVE STATE**: Update `stepsCompleted` in frontmatter before loading next step
 6. **LOAD NEXT**: When directed, load, read entire file, then execute the next step file
 
 ### Critical Rules (NO EXCEPTIONS)

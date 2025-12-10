@@ -108,6 +108,46 @@ session_state_template: '{workflow_path}/templates/session-state.yaml'
 - 백로그: {backlog_id}
   </check>
 
+### 4b. 세션 복원 분기 (Checkpoint Restoration)
+
+<check if="session state has current_step AND current_step is not empty">
+**🔄 이전 세션 체크포인트 발견!**
+
+| 항목 | 값 |
+|------|-----|
+| 저장된 스텝 | {current_step} |
+| 저장 시간 | {checkpoint.saved_at} |
+| 저장 이유 | {checkpoint.reason} |
+| 진행상황 | {step_progress.checklist_completed}/{step_progress.checklist_total} |
+
+<check if="checkpoint.reason == 'context_low'">
+**⚠️ 이전 세션은 컨텍스트 부족으로 저장되었습니다.**
+</check>
+
+**선택하세요:**
+| 옵션 | 설명 |
+|------|------|
+| **[R]** | 저장 지점에서 이어서 작업 (권장) |
+| **[N]** | 처음부터 새로 시작 |
+
+<action if="R">
+체크포인트 정보를 유지하고, Section 5-6 완료 후 {current_step} 파일로 직접 이동
+(Step 2 스킵)
+</action>
+
+<action if="N">
+checkpoint 정보 초기화:
+- current_step: ""
+- checkpoint: 모두 비움
+- step_progress: 모두 비움
+이후 정상 플로우 (Step 2)로 진행
+</action>
+</check>
+
+<check if="no current_step OR current_step is empty">
+**ℹ️ 체크포인트 없음** - 정상 플로우로 진행
+</check>
+
 ### 5. 서브태스크 목록 로드
 
 <action>서브태스크 폴더 확인: {data_path}/{backlog_id}/subtasks/</action>
@@ -135,7 +175,7 @@ PM 에이전트에서 `*decompose` 명령으로 백로그를 분해해주세요.
 **ℹ️ 코드 분석 결과 없음** - PM에서 `*analyze-code`로 생성 가능
 </check>
 
-### 7. 초기화 완료 및 자동 진행
+### 7. 초기화 완료 및 진행
 
 **✅ 초기화 완료**
 
@@ -143,11 +183,29 @@ PM 에이전트에서 `*decompose` 명령으로 백로그를 분해해주세요.
 - 서브태스크: {total_subtasks}개
 - MCP 도구: {available_mcp_count}/{total_mcp_count}개 사용 가능
 
-**서브태스크 선택 단계로 진행합니다...**
-
 #### Menu Handling Logic:
 
-- 초기화 완료 후 자동으로 {nextStepFile} 로드 및 실행
+<check if="user selected R in Section 4b (checkpoint restoration)">
+**🔄 체크포인트에서 복원 중...**
+
+저장된 스텝: {current_step}
+진행상황: 체크리스트 {step_progress.checklist_completed} 완료
+
+**저장 지점으로 이동합니다...**
+
+<action>
+{workflow_path}/steps/{current_step}.md 로드 및 실행
+(Step 2, 3 스킵)
+</action>
+</check>
+
+<check if="user selected N in Section 4b OR no checkpoint exists">
+**서브태스크 선택 단계로 진행합니다...**
+
+<action>
+{nextStepFile} 로드 및 실행
+</action>
+</check>
 
 ---
 
@@ -159,7 +217,8 @@ PM 에이전트에서 `*decompose` 명령으로 백로그를 분해해주세요.
 - 백로그 ID 확인됨
 - 서브태스크 목록 로드됨
 - 세션 상태 로드/생성됨
-- Step 2로 자동 진행
+- 체크포인트 존재 시: 사용자 선택에 따라 복원 또는 새 시작
+- 정상 진행: Step 2로 이동 / 복원 진행: 저장된 스텝으로 직접 이동
 
 ### ❌ SYSTEM FAILURE:
 

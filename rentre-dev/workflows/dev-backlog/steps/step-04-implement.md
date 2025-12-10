@@ -192,6 +192,26 @@ describe('functionName', () => {
 | 체크리스트 3 | ⏳ 대기   |
 | 테스트 작성  | ⏳ 대기   |
 
+### 4b. 컨텍스트 모니터링 (Context Warning)
+
+<check if="context usage > 90%">
+**⚠️ 컨텍스트 경고: 남은 용량이 10% 미만입니다!**
+
+현재 진행상황:
+- 완료된 체크리스트: {completed_items}/{total_items}
+- 변경된 파일: {files_changed}
+- 작성된 테스트: {tests_written}
+
+**선택하세요:**
+| 옵션  | 설명 |
+|-------|------|
+| **[S]** | 세션 저장 후 종료 (권장) |
+| **[I]** | 무시하고 계속 진행 |
+
+<action if="S">세션 저장 처리로 이동</action>
+<action if="I">경고 무시, 구현 계속</action>
+</check>
+
 ### 5. 도움 요청 처리 (H 선택 시)
 
 <check if="user needs help">
@@ -220,6 +240,45 @@ describe('functionName', () => {
 <action>세션 상태에 진행상황 저장</action>
 
 다음에 `*continue` 또는 이 워크플로우를 다시 실행하면 이어서 작업할 수 있습니다.
+</check>
+
+### 6b. 세션 저장 처리 (S 선택 시)
+
+<check if="user selects S">
+**💾 세션 저장**
+
+<action>
+세션 상태 파일 업데이트: {data_path}/{backlog_id}/session-state.yaml
+
+```yaml
+current_step: "step-04-implement"
+checkpoint:
+  saved_at: "{timestamp}"
+  reason: "user_request"  # 또는 "context_low"
+  context_remaining: "{remaining_percent}%"
+step_progress:
+  checklist_completed: [{completed_item_numbers}]
+  checklist_total: {total_items}
+  files_changed: [{changed_files_list}]
+  tests_written: [{test_files_list}]
+  current_action: "{current_action_description}"
+```
+</action>
+
+**✅ 세션이 저장되었습니다.**
+
+**저장된 정보:**
+- 현재 스텝: step-04-implement
+- 완료된 체크리스트: {completed_items}/{total_items}
+- 변경된 파일: {files_changed_count}개
+- 작성된 테스트: {tests_written_count}개
+
+다음 세션에서 `dev-backlog` 워크플로우 실행 시 이 지점에서 이어서 작업합니다.
+
+**종료하시겠습니까?** [Y] 종료 | [N] 계속 작업
+
+<action if="Y">워크플로우 종료</action>
+<action if="N">구현 계속, 메뉴 재표시</action>
 </check>
 
 ### 7. 구현 완료 확인
@@ -255,17 +314,19 @@ describe('functionName', () => {
 
 ### 8. Present MENU OPTIONS
 
-Display: **구현 상태:** [C] 검증으로 진행 | [H] 도움 요청 | [P] 일시 정지
+Display: **구현 상태:** [C] 검증으로 진행 | [S] 세션 저장 | [H] 도움 요청 | [P] 일시 정지
 
 #### EXECUTION RULES:
 
 - ALWAYS halt and wait for user input after presenting menu
 - Check implementation completeness before allowing C
-- After help or pause, return to implementation
+- After help, save, or pause, return to implementation or exit as appropriate
+- Monitor context usage and show warning if > 90%
 
 #### Menu Handling Logic:
 
 - IF C: 구현 완료 확인 후 load {nextStepFile}
+- IF S: 세션 저장 처리 (Section 6b) 실행, 종료 여부 확인
 - IF H: 도움 제공 후 구현 계속, 메뉴 재표시
 - IF P: 세션 저장 후 워크플로우 일시 정지
 - IF Any other: 응답 후 메뉴 재표시

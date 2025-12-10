@@ -41,7 +41,7 @@ This uses **step-file architecture** for disciplined execution:
 - **Micro-file Design**: 각 스텝은 독립적인 명령 파일로, 전체 워크플로우의 일부로서 정확히 따라야 함
 - **Just-In-Time Loading**: 현재 스텝 파일만 메모리에 로드 - 미래 스텝은 지시받기 전까지 로드하지 않음
 - **Sequential Enforcement**: 스텝 파일 내 순서는 반드시 지켜야 함, 건너뛰기나 최적화 금지
-- **State Tracking**: 출력 파일 frontmatter의 `stepsCompleted` 배열로 진행 상태 추적
+- **State Tracking**: Document progress in output file frontmatter using `stepsCompleted` array when a workflow produces a document
 - **Append-Only Building**: 출력 파일에 내용을 점진적으로 추가
 
 ### Step Processing Rules
@@ -50,15 +50,15 @@ This uses **step-file architecture** for disciplined execution:
 2. **FOLLOW SEQUENCE**: 번호순으로 실행, 일탈 금지
 3. **WAIT FOR INPUT**: 메뉴가 표시되면 사용자 입력 대기
 4. **CHECK CONTINUATION**: [C] 선택 시에만 다음 스텝으로 진행
-5. **SAVE STATE**: 다음 스텝 로드 전 frontmatter의 `stepsCompleted` 업데이트
-6. **LOAD NEXT**: 지시받으면 다음 스텝 파일을 로드하고 전체를 읽은 후 실행
+5. **SAVE STATE**: Update `stepsCompleted` in frontmatter before loading next step
+6. **LOAD NEXT**: When directed, load, read entire file, then execute the next step file
 
 ### Critical Rules (NO EXCEPTIONS)
 
 - 🛑 **NEVER** 여러 스텝 파일을 동시에 로드하지 않음
 - 📖 **ALWAYS** 스텝 파일 전체를 읽은 후 실행
 - 🚫 **NEVER** 스텝을 건너뛰거나 순서를 최적화하지 않음
-- 💾 **ALWAYS** 특정 스텝의 최종 출력 작성 시 frontmatter 업데이트
+- 💾 **ALWAYS** update frontmatter of output files when writing the final output for a specific step
 - 🎯 **ALWAYS** 스텝 파일의 정확한 지시사항을 따름
 - ⏸️ **ALWAYS** 메뉴에서 멈추고 사용자 입력 대기
 - 📋 **NEVER** 미래 스텝에서 할 일 목록을 미리 만들지 않음
