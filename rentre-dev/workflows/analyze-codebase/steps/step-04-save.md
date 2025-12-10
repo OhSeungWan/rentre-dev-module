@@ -16,6 +16,9 @@ backlog_folder: '{backlog_folder}'
 analysis_filename: 'code-analysis.md'
 outputFile: '{backlog_folder}/{analysis_filename}'
 
+# State File
+analysis_state_file: '{backlog_folder}/analysis.yaml'
+
 # Task References
 advancedElicitationTask: '{project-root}/.bmad/core/tasks/advanced-elicitation.xml'
 partyModeWorkflow: '{project-root}/.bmad/core/workflows/party-mode/workflow.md'
@@ -66,6 +69,16 @@ partyModeWorkflow: '{project-root}/.bmad/core/workflows/party-mode/workflow.md'
 - This is about documentation, not analysis
 
 ## SAVE PROCESS:
+
+### 0. Load analysis.yaml
+
+`{analysis_state_file}` 로드하여 컨텍스트 복원:
+
+- `backlog_id`, `backlog_folder` 확인
+- `init` 섹션에서 백로그 정보 로드
+- `config` 섹션에서 분석 설정 로드
+- `analysis` 섹션에서 분석 결과 로드
+- stepsCompleted 확인 (현재 [1, 2, 3]이어야 함)
 
 ### 1. Format Analysis Results
 
@@ -249,7 +262,24 @@ code_context:
 
 파일을 확인해보시겠습니까?"
 
-### 6. Present MENU OPTIONS
+### 6. Save to analysis.yaml
+
+`{analysis_state_file}` 업데이트:
+
+```yaml
+# 기존 내용 유지 + save 섹션 추가
+stepsCompleted: [1, 2, 3, 4]
+updated_at: "{current_date}"
+
+# Step 4 결과: 저장
+save:
+  saved: true
+  analysis_file: "{analysis_filename}"
+  analysis_path: "{outputFile}"
+  backlog_info_updated: true
+```
+
+### 7. Present MENU OPTIONS
 
 Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Continue
 
@@ -264,12 +294,14 @@ Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Conti
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Confirm files saved, then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#6-present-menu-options)
+- IF C:
+  1. analysis.yaml에 `save` 섹션 및 `stepsCompleted: [1, 2, 3, 4]` 저장 확인
+  2. load, read entire file, then execute {nextStepFile}
+- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#7-present-menu-options)
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and files are saved, will you then load, read entire file, then execute {nextStepFile} to complete the workflow.
+ONLY WHEN C is selected and analysis.yaml is saved with stepsCompleted: [1, 2, 3, 4], will you then load, read entire file, then execute {nextStepFile} to complete the workflow.
 
 ---
 

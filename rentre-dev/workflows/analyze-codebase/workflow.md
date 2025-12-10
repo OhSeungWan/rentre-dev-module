@@ -80,6 +80,7 @@ Resolve the following paths:
 - `backlogs_folder`: {data_path}/backlogs
 - `tasks_folder`: {data_path}/tasks
 - `analysis_filename`: code-analysis.md
+- `analysis_state_file`: analysis.yaml (진행 상태 저장용)
 
 ### 3. First Step EXECUTION
 

@@ -11,6 +11,9 @@ thisStepFile: '{workflow_path}/steps/step-03-analyze.md'
 nextStepFile: '{workflow_path}/steps/step-04-save.md'
 workflowFile: '{workflow_path}/workflow.md'
 
+# State File
+analysis_state_file: '{backlog_folder}/analysis.yaml'
+
 # Task References
 advancedElicitationTask: '{project-root}/.bmad/core/tasks/advanced-elicitation.xml'
 partyModeWorkflow: '{project-root}/.bmad/core/workflows/party-mode/workflow.md'
@@ -61,6 +64,15 @@ partyModeWorkflow: '{project-root}/.bmad/core/workflows/party-mode/workflow.md'
 - This is the main analysis work
 
 ## ANALYSIS PROCESS:
+
+### 0. Load analysis.yaml
+
+`{analysis_state_file}` 로드하여 컨텍스트 복원:
+
+- `backlog_id`, `backlog_folder` 확인
+- `init` 섹션에서 백로그 정보 로드
+- `config` 섹션에서 분석 설정 로드
+- stepsCompleted 확인 (현재 [1, 2]이어야 함)
 
 ### 1. Extract Keywords from Backlog
 
@@ -207,7 +219,40 @@ Comprehensive 분석 수행:
 
 분석 결과를 저장하고 계속 진행할까요?"
 
-### 7. Present MENU OPTIONS
+### 7. Save analysis to analysis.yaml
+
+`{analysis_state_file}` 업데이트:
+
+```yaml
+# 기존 내용 유지 + analysis 섹션 추가
+stepsCompleted: [1, 2, 3]
+updated_at: "{current_date}"
+
+# Step 3 결과: 분석
+analysis:
+  keywords: [{extracted_keywords}]
+  tech_stack:
+    languages: [{languages}]
+    frameworks: [{frameworks}]
+    libraries: [{libraries}]
+  files:
+    total_searched: {total_files_searched}
+    relevant_count: {relevant_files_count}
+    modify_count: {modify_count}
+  architecture_pattern: "{architecture_pattern}"
+  key_findings:
+    - "{finding_1}"
+    - "{finding_2}"
+    - "{finding_3}"
+  target_files:
+    - path: "{file_path_1}"
+      role: "{role_1}"
+      modify: {modify_1}
+      priority: "{priority_1}"
+    # ... 추가 파일들
+```
+
+### 8. Present MENU OPTIONS
 
 Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Continue
 
@@ -222,12 +267,14 @@ Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Conti
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Pass analysis results, then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#7-present-menu-options)
+- IF C:
+  1. analysis.yaml에 `analysis` 섹션 및 `stepsCompleted: [1, 2, 3]` 저장 확인
+  2. load, read entire file, then execute {nextStepFile}
+- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#8-present-menu-options)
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and analysis is complete, will you then load, read entire file, then execute {nextStepFile} to save and format the analysis results.
+ONLY WHEN C is selected and analysis.yaml is saved with stepsCompleted: [1, 2, 3], will you then load, read entire file, then execute {nextStepFile} to save and format the analysis results.
 
 ---
 

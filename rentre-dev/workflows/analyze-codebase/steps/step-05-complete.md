@@ -14,6 +14,9 @@ workflowFile: '{workflow_path}/workflow.md'
 backlog_folder: '{backlog_folder}'
 analysis_filename: 'code-analysis.md'
 analysis_path: '{backlog_folder}/{analysis_filename}'
+
+# State File
+analysis_state_file: '{backlog_folder}/analysis.yaml'
 ---
 
 # Step 5: 분석 결과 요약 및 완료
@@ -62,6 +65,14 @@ analysis_path: '{backlog_folder}/{analysis_filename}'
 
 ## COMPLETION PROCESS:
 
+### 0. Load analysis.yaml
+
+`{analysis_state_file}` 로드하여 컨텍스트 복원:
+
+- `backlog_id`, `backlog_folder` 확인
+- `init`, `config`, `analysis`, `save` 섹션 로드
+- stepsCompleted 확인 (현재 [1, 2, 3, 4]이어야 함)
+
 ### 1. Display Analysis Summary
 
 분석 결과 요약 표시:
@@ -94,7 +105,22 @@ analysis_path: '{backlog_folder}/{analysis_filename}'
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-### 2. Handle Workflow Return
+### 2. Finalize analysis.yaml
+
+`{analysis_state_file}` 최종 업데이트:
+
+```yaml
+# 기존 내용 유지 + completion 섹션 추가
+stepsCompleted: [1, 2, 3, 4, 5]
+updated_at: "{current_date}"
+
+# Step 5 결과: 완료
+completion:
+  status: "completed"
+  completed_at: "{current_date}"
+```
+
+### 3. Handle Workflow Return
 
 **IF invoked from another workflow:**
 
@@ -104,6 +130,7 @@ analysis_path: '{backlog_folder}/{analysis_filename}'
 - `{target_files}`: 수정 필요 파일 목록
 - `{implementation_notes}`: 구현 주의사항
 - `{analysis_path}`: 저장된 파일 경로
+- `{analysis_state_file}`: analysis.yaml 경로
 
 "분석 결과를 호출 워크플로우에 반환합니다..."
 
@@ -111,7 +138,7 @@ analysis_path: '{backlog_folder}/{analysis_filename}'
 
 **IF standalone execution:**
 
-### 3. Present Next Actions (Standalone Only)
+### 4. Present Next Actions (Standalone Only)
 
 다음 작업 옵션 제시:
 
@@ -123,7 +150,7 @@ analysis_path: '{backlog_folder}/{analysis_filename}'
 - [v] Dev 에이전트로 전환 (구현 시작)
 - [x] 완료"
 
-### 4. Handle User Selection
+### 5. Handle User Selection
 
 **IF d (상세 보기):**
 

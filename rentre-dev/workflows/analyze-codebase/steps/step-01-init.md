@@ -16,6 +16,7 @@ data_path: '{module_path}/data'
 backlogs_folder: '{data_path}/backlogs'
 tasks_folder: '{data_path}/tasks'
 analysis_filename: 'code-analysis.md'
+analysis_state_file: '{backlog_folder}/analysis.yaml'
 
 # Task References
 advancedElicitationTask: '{project-root}/.bmad/core/tasks/advanced-elicitation.xml'
@@ -67,6 +68,27 @@ partyModeWorkflow: '{project-root}/.bmad/core/workflows/party-mode/workflow.md'
 - This is about setup, not analysis
 
 ## INITIALIZATION PROCESS:
+
+### 0. Check Existing Analysis State
+
+기존 분석 상태 파일 확인:
+
+**IF `{backlog_folder}` 가 전달된 경우:**
+
+`{backlog_folder}/analysis.yaml` 존재 여부 확인
+
+**IF analysis.yaml 존재:**
+
+"기존 분석 진행 상태를 발견했습니다. 이전 세션을 이어서 진행하시겠습니까?"
+
+- [y] 예 - 이전 상태에서 계속 → step-01b-continue.md 로드
+- [n] 아니오 - 새로 시작
+
+**IF 'y' 선택:**
+→ `{workflow_path}/steps/step-01b-continue.md` 로드 및 실행
+
+**IF 'n' 선택 OR analysis.yaml 없음:**
+→ 섹션 1로 계속 진행
 
 ### 1. Check Invocation Context
 
@@ -170,7 +192,27 @@ partyModeWorkflow: '{project-root}/.bmad/core/workflows/party-mode/workflow.md'
 
 이 설정으로 진행할까요?"
 
-### 5. Present MENU OPTIONS
+### 5. Create/Initialize analysis.yaml
+
+분석 상태 파일 생성: `{backlog_folder}/analysis.yaml`
+
+```yaml
+# analysis.yaml - 분석 진행 상태
+---
+backlog_id: "{backlog_id}"
+stepsCompleted: [1]
+created_at: "{current_date}"
+updated_at: "{current_date}"
+
+# Step 1 결과: 초기화
+init:
+  backlog_title: "{backlog_title}"
+  backlog_folder: "{backlog_folder}"
+  analysis_mode: "{analysis_mode}"
+  existing_analysis: {existing_analysis_found}
+```
+
+### 6. Present MENU OPTIONS
 
 Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Continue
 
@@ -185,12 +227,14 @@ Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Conti
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Confirm setup, then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#5-present-menu-options)
+- IF C:
+  1. analysis.yaml에 `stepsCompleted: [1]` 저장 확인
+  2. load, read entire file, then execute {nextStepFile}
+- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#6-present-menu-options)
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and backlog info is confirmed, will you then load, read entire file, then execute {nextStepFile} to begin analysis depth and scope selection.
+ONLY WHEN C is selected and analysis.yaml is saved with stepsCompleted: [1], will you then load, read entire file, then execute {nextStepFile} to begin analysis depth and scope selection.
 
 ---
 
