@@ -11,6 +11,9 @@ nextStepFile: '{workflow_path}/steps/step-02b-block-parsing.md' # 🆕 블록 �
 prevStepFile: '{workflow_path}/steps/step-01-input.md'
 workflowFile: '{workflow_path}/workflow.md'
 
+# Progress File (컨텍스트 보존용)
+prepare_file: '{data_path}/{backlog_id}/prepare.yaml'
+
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
 partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workflow.md'
@@ -48,9 +51,21 @@ partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workf
 
 ## CONTEXT FROM PREVIOUS STEP:
 
+**prepare.yaml에서 Step 1 결과 로드:**
+
+```yaml
+load_from: '{prepare_file}'
+restore:
+  - step_01.backlog_id
+  - step_01.title
+  - step_01.type
+  - step_01.notion_id
+  - step_01.raw_blocks
+```
+
 - `backlog_id`, `title`, `type` - Step 1에서 수집
 - `notion_id` - 노션 연동 시
-- `description`, `acceptance_criteria_raw` - 원본 데이터
+- `raw_blocks` - 원본 블록 데이터
 
 ## YOUR TASK:
 
@@ -171,24 +186,32 @@ action:
 
 ### 5. 컨텍스트 데이터 저장
 
-분석 결과를 변수에 저장:
+**prepare.yaml에 Step 2 결과 저장:**
 
 ```yaml
-hierarchy:
-  parent:
-    id: { parent_id }
-    title: { parent_title }
-    type: { parent_type }
-    notion_id: { parent_notion_id }
-    requirements_summary: { parent_requirements }
-  existing_children:
-    count: { children_count }
-    items: { children_list }
-  connections:
-    blocking: { blocking_list }
-    blocked_by: { blocked_by_list }
-    related: { related_list }
+# {prepare_file} 업데이트
+stepsCompleted: [1, 2]
+last_updated: {timestamp}
+
+# Step 2 결과 추가
+step_02:
+  hierarchy:
+    parent:
+      id: { parent_id }
+      title: { parent_title }
+      type: { parent_type }
+      notion_id: { parent_notion_id }
+      requirements_summary: { parent_requirements }
+    existing_children:
+      count: { children_count }
+      items: { children_list }
+    connections:
+      blocking: { blocking_list }
+      blocked_by: { blocked_by_list }
+      related: { related_list }
 ```
+
+**CRITICAL:** 컨텍스트 초과 시에도 계층 분석 결과 보존
 
 **🔧 Serena MCP로 프로젝트 컨텍스트 참조 (선택적):**
 
@@ -239,7 +262,7 @@ Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Conti
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Update frontmatter `stepsCompleted: [1, 2]`, then load, read entire file, then execute {nextStepFile} (step-02b-block-parsing.md)
+- IF C: Save to {prepare_file} with `stepsCompleted: [1, 2]` and step_02 results, then load, read entire file, then execute {nextStepFile}
 - IF E: Show detailed info for selected backlog, then [Redisplay Menu Options](#6-present-menu-options)
 - IF B: Load {prevStepFile}
 - IF X: End workflow with summary

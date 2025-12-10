@@ -11,6 +11,9 @@ nextStepFile: '{workflow_path}/steps/step-05-context-verify.md'
 prevStepFile: '{workflow_path}/steps/step-03-requirements.md'
 workflowFile: '{workflow_path}/workflow.md'
 
+# Progress File (컨텍스트 보존용)
+prepare_file: '{data_path}/{backlog_id}/prepare.yaml'
+
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
 partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workflow.md'
@@ -48,8 +51,23 @@ partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workf
 
 ## CONTEXT FROM PREVIOUS STEPS:
 
+**prepare.yaml에서 이전 스텝 결과 로드:**
+
+```yaml
+load_from: '{prepare_file}'
+restore:
+  - step_01.backlog_id
+  - step_01.title
+  - step_01.type
+  - step_02.hierarchy
+  - step_02b.content_blocks
+  - step_03.requirements
+  - step_03.acceptance_criteria
+```
+
 - `backlog_id`, `title`, `type` - Step 1
 - `hierarchy` - Step 2
+- `content_blocks` - Step 2b
 - `requirements`, `acceptance_criteria` - Step 3
 
 ## YOUR TASK:
@@ -169,19 +187,32 @@ After user input:
 
 ---
 
-### 5. 컨텍스트 요약 생성
+### 5. prepare.yaml에 Step 4 결과 저장
 
-수집된 모든 컨텍스트를 구조화:
+**prepare.yaml에 Step 4 결과 저장:**
 
 ```yaml
-context_notes:
-  figma: { figma_info }
-  references: { references_list }
-  unclear_items: { unclear_items_list }
-  parent_context: { parent_summary }
-  existing_children: { children_summary }
-  connections: { connections_summary }
+# {prepare_file} 업데이트
+stepsCompleted: [1, 2, 2b, 3, 4]
+last_updated: {timestamp}
+
+# Step 4 결과 추가
+step_04:
+  figma:
+    url: { figma_url }
+    file_key: { figma_file_key }
+    node_id: { figma_node_id }
+  references:
+    - type: api_doc
+      url: { url }
+      title: { title }
+  unclear_items:
+    - item: REQ-003
+      issue: '불명확한 내용'
+      suggestion: '제안'
 ```
+
+**CRITICAL:** 컨텍스트 초과 시에도 추가 컨텍스트 결과 보존
 
 > "**📚 추가 컨텍스트 수집 완료**
 >
@@ -225,7 +256,7 @@ Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Conti
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Update frontmatter `stepsCompleted: [1, 2, 3, 4]`, then load, read entire file, then execute {nextStepFile}
+- IF C: Save to {prepare_file} with `stepsCompleted: [1, 2, 2b, 3, 4]` and step_04 results, then load, read entire file, then execute {nextStepFile}
 - IF F: Add/modify Figma links, then [Redisplay Menu Options](#6-present-menu-options)
 - IF R: Add reference documents, then [Redisplay Menu Options](#6-present-menu-options)
 - IF U: Handle unclear items, then [Redisplay Menu Options](#6-present-menu-options)

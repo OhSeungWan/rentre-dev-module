@@ -11,6 +11,9 @@ nextStepFile: '{workflow_path}/steps/step-03-requirements.md'
 prevStepFile: '{workflow_path}/steps/step-02-context-analysis.md'
 workflowFile: '{workflow_path}/workflow.md'
 
+# Progress File (컨텍스트 보존용)
+prepare_file: '{data_path}/{backlog_id}/prepare.yaml'
+
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
 partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workflow.md'
@@ -53,6 +56,18 @@ schemaDoc: '{module_path}/docs/block-traceability-schema.md'
 - 🚫 FORBIDDEN 원본 내용 수정 또는 요약 - 있는 그대로 저장
 
 ## CONTEXT FROM PREVIOUS STEPS:
+
+**prepare.yaml에서 이전 스텝 결과 로드:**
+
+```yaml
+load_from: '{prepare_file}'
+restore:
+  - step_01.backlog_id
+  - step_01.title
+  - step_01.type
+  - step_01.raw_blocks      # 원본 블록 데이터
+  - step_02.hierarchy       # 계층 구조
+```
 
 - `backlog_id`, `title`, `type` - Step 1에서 수집
 - `raw_blocks` - Step 1에서 수집한 원본 블록들
@@ -194,32 +209,40 @@ algorithm:
 
 ### 7. content_blocks 저장
 
-확정된 블록들을 메모리에 저장:
+**prepare.yaml에 Step 2b 결과 저장:**
 
 ```yaml
-content_blocks:
-  - id: 'BLK-001'
-    type: 'instruction'
-    lines: [1, 5]
-    source: 'notion_toggle'
-    toggle_title: '구조화 데이터 작업 지침'
-    content: |
-      - 새롭게 추가되는 구조화 데이터만 작업
-      - 기존 구조화 데이터 수정은 제외
-      - JSON-LD 형식 사용
-    tags: ['structured-data', 'constraint']
+# {prepare_file} 업데이트
+stepsCompleted: [1, 2, 2b]
+last_updated: {timestamp}
 
-  - id: 'BLK-002'
-    type: 'instruction'
-    lines: [6, 12]
-    source: 'notion_toggle'
-    toggle_title: '헤딩 구조 작업 지침'
-    content: |
-      - H1은 제목으로만 사용
-      - H2는 섹션 구분용
-      - H3 이하는 내용 구조화
-    tags: ['heading', 'ui-structure']
+# Step 2b 결과 추가
+step_02b:
+  content_blocks:
+    - id: 'BLK-001'
+      type: 'instruction'
+      lines: [1, 5]
+      source: 'notion_toggle'
+      toggle_title: '구조화 데이터 작업 지침'
+      content: |
+        - 새롭게 추가되는 구조화 데이터만 작업
+        - 기존 구조화 데이터 수정은 제외
+        - JSON-LD 형식 사용
+      tags: ['structured-data', 'constraint']
+
+    - id: 'BLK-002'
+      type: 'instruction'
+      lines: [6, 12]
+      source: 'notion_toggle'
+      toggle_title: '헤딩 구조 작업 지침'
+      content: |
+        - H1은 제목으로만 사용
+        - H2는 섹션 구분용
+        - H3 이하는 내용 구조화
+      tags: ['heading', 'ui-structure']
 ```
+
+**CRITICAL:** 컨텍스트 초과 시에도 블록 파싱 결과 보존
 
 ---
 
@@ -257,7 +280,7 @@ Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Conti
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Update frontmatter `stepsCompleted: [1, 2, 2b]`, then load, read entire file, then execute {nextStepFile}
+- IF C: Save to {prepare_file} with `stepsCompleted: [1, 2, 2b]` and step_02b results, then load, read entire file, then execute {nextStepFile}
 - IF M: Merge selected blocks, then [Redisplay Menu Options](#8-present-menu-options)
 - IF S: Split selected block, then [Redisplay Menu Options](#8-present-menu-options)
 - IF T: Change block type, then [Redisplay Menu Options](#8-present-menu-options)

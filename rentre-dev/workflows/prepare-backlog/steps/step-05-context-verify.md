@@ -11,6 +11,9 @@ nextStepFile: '{workflow_path}/steps/step-06-save.md'
 prevStepFile: '{workflow_path}/steps/step-04-additional-context.md'
 workflowFile: '{workflow_path}/workflow.md'
 
+# Progress File (컨텍스트 보존용)
+prepare_file: '{data_path}/{backlog_id}/prepare.yaml'
+
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
 partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workflow.md'
@@ -49,10 +52,23 @@ gather-context 태스크를 실행하여 컨텍스트 충족도를 검증하고,
 
 ## CONTEXT FROM PREVIOUS STEPS:
 
+**prepare.yaml에서 이전 스텝 결과 로드:**
+
+```yaml
+load_from: '{prepare_file}'
+restore:
+  - step_01 (backlog_id, title, type)
+  - step_02 (hierarchy)
+  - step_02b (content_blocks)
+  - step_03 (requirements, acceptance_criteria)
+  - step_04 (figma, references, unclear_items)
+```
+
 - `backlog_id`, `title`, `type` - Step 1
 - `hierarchy` - Step 2
+- `content_blocks` - Step 2b
 - `requirements`, `acceptance_criteria` - Step 3
-- `context_notes` (figma, references, unclear_items) - Step 4
+- `figma`, `references`, `unclear_items` - Step 4
 
 ## YOUR TASK:
 
@@ -134,19 +150,25 @@ gathered_context: { additional_info }
 
 ---
 
-### 3. 추가 컨텍스트 병합
+### 3. prepare.yaml에 Step 5 결과 저장
 
-**If gathered_context exists:**
-
-수집된 추가 컨텍스트를 context_notes에 병합:
+**prepare.yaml에 Step 5 결과 저장:**
 
 ```yaml
-context_notes:
-  # ... existing fields ...
-  gathered:
-    additional_info: { gathered_context }
-    gathered_at: { timestamp }
+# {prepare_file} 업데이트
+stepsCompleted: [1, 2, 2b, 3, 4, 5]
+last_updated: {timestamp}
+
+# Step 5 결과 추가
+step_05:
+  context_score: { 0-100 }
+  can_decompose: { true|false }
+  missing_required: { list }
+  missing_recommended: { list }
+  gathered_context: { additional_info }
 ```
+
+**CRITICAL:** 컨텍스트 초과 시에도 검증 결과 보존
 
 ---
 
@@ -194,7 +216,7 @@ Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Conti
 - IF P: Execute {partyModeWorkflow}
 - IF C:
   - Check if context_score >= 50, if not warn and confirm
-  - Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5]`
+  - Save to {prepare_file} with `stepsCompleted: [1, 2, 2b, 3, 4, 5]` and step_05 results
   - Then load, read entire file, then execute {nextStepFile}
 - IF G: Re-run {gatherContextTask} with updated parameters, then [Redisplay Menu Options](#5-present-menu-options)
 - IF S: Proceed despite low score (with warning logged), same as C

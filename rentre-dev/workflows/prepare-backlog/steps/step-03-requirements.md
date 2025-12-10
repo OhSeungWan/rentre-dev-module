@@ -11,6 +11,9 @@ nextStepFile: '{workflow_path}/steps/step-04-additional-context.md'
 prevStepFile: '{workflow_path}/steps/step-02b-block-parsing.md' # 🆕 블록 파싱 단계에서 이동
 workflowFile: '{workflow_path}/workflow.md'
 
+# Progress File (컨텍스트 보존용)
+prepare_file: '{data_path}/{backlog_id}/prepare.yaml'
+
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
 partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workflow.md'
@@ -48,10 +51,21 @@ partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workf
 
 ## CONTEXT FROM PREVIOUS STEPS:
 
+**prepare.yaml에서 이전 스텝 결과 로드:**
+
+```yaml
+load_from: '{prepare_file}'
+restore:
+  - step_01.backlog_id
+  - step_01.title
+  - step_01.type
+  - step_02.hierarchy        # 계층 구조
+  - step_02b.content_blocks  # 파싱된 블록들
+```
+
 - `backlog_id`, `title`, `type` - Step 1
 - `hierarchy` (parent, children, connections) - Step 2
 - `content_blocks` - Step 2b에서 파싱된 블록들 🆕
-- `description`, `acceptance_criteria_raw` - 원본 데이터
 
 ## YOUR TASK:
 
@@ -188,6 +202,36 @@ After user input:
 
 ---
 
+### 5. prepare.yaml에 Step 3 결과 저장
+
+**prepare.yaml에 Step 3 결과 저장:**
+
+```yaml
+# {prepare_file} 업데이트
+stepsCompleted: [1, 2, 2b, 3]
+last_updated: {timestamp}
+
+# Step 3 결과 추가
+step_03:
+  requirements:
+    - id: 'REQ-001'
+      summary: '요구사항 요약'
+      type: functional
+      priority: high
+      source_blocks: ['BLK-001', 'BLK-002']
+      constraints: ['제약 조건']
+  acceptance_criteria:
+    - id: 'AC-001'
+      summary: '수용 기준 요약'
+      source_blocks: ['BLK-004']
+      testable: true
+      related_requirements: ['REQ-001']
+```
+
+**CRITICAL:** 컨텍스트 초과 시에도 요구사항/수용기준 결과 보존
+
+---
+
 ## SUCCESS METRICS:
 
 ✅ 모든 요구사항에 REQ-XXX ID 부여
@@ -195,6 +239,7 @@ After user input:
 ✅ 요구사항-수용기준 관계 매핑
 ✅ 사용자 검토 및 승인 완료
 ✅ 추적성을 위한 구조화 완료
+✅ prepare.yaml에 결과 저장 완료
 
 ## FAILURE MODES:
 
@@ -220,7 +265,7 @@ Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Conti
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Update frontmatter `stepsCompleted: [1, 2, 2b, 3]`, then load, read entire file, then execute {nextStepFile}
+- IF C: Save to {prepare_file} with `stepsCompleted: [1, 2, 2b, 3]` and step_03 results, then load, read entire file, then execute {nextStepFile}
 - IF M: Allow modifications to requirements/acceptance criteria, then [Redisplay Menu Options](#5-present-menu-options)
 - IF D: Allow additions to requirements/acceptance criteria, then [Redisplay Menu Options](#5-present-menu-options)
 - IF B: Load {prevStepFile}

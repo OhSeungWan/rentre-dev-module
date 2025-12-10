@@ -23,6 +23,9 @@ gather_context_task: '{module_path}/tasks/gather-context.md'
 data_path: '{module_path}/data'
 output_folder: '{data_path}/backlogs'
 
+# Progress File (컨텍스트 보존용)
+prepare_file: '{data_path}/{backlog_id}/prepare.yaml'
+
 # Invocation Configuration
 invocable: true
 invocation_params:

@@ -10,8 +10,12 @@ thisStepFile: '{workflow_path}/steps/step-01b-continue.md'
 workflowFile: '{workflow_path}/workflow.md'
 data_path: '{module_path}/data'
 
+# Progress File (컨텍스트 보존용)
+prepare_file: '{data_path}/{backlog_id}/prepare.yaml'
+
 # Routing Step Files
 step02File: '{workflow_path}/steps/step-02-context-analysis.md'
+step02bFile: '{workflow_path}/steps/step-02b-block-parsing.md'
 step03File: '{workflow_path}/steps/step-03-requirements.md'
 step04File: '{workflow_path}/steps/step-04-additional-context.md'
 step05File: '{workflow_path}/steps/step-05-context-verify.md'
@@ -63,19 +67,21 @@ partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workf
 
 ### 1. 상태 복원
 
-기존 백로그 폴더에서 상태 로드:
+**prepare.yaml에서 진행 상태 및 중간 결과물 로드:**
 
 ```yaml
-load_from: '{data_path}/{backlog_id}/backlog-info.yaml'
+load_from: '{prepare_file}'
 restore:
-  - backlog_id
-  - title
-  - type
-  - stepsCompleted
-  - requirements (if exists)
-  - acceptance_criteria (if exists)
-  - context_notes (if exists)
+  - stepsCompleted          # 완료된 스텝 목록
+  - step_01                 # Step 1 결과 (backlog_id, title, type, raw_blocks)
+  - step_02 (if exists)     # Step 2 결과 (hierarchy)
+  - step_02b (if exists)    # Step 2b 결과 (content_blocks)
+  - step_03 (if exists)     # Step 3 결과 (requirements, acceptance_criteria)
+  - step_04 (if exists)     # Step 4 결과 (figma, references, unclear_items)
+  - step_05 (if exists)     # Step 5 결과 (context_score, can_decompose)
 ```
+
+**CRITICAL:** prepare.yaml의 모든 중간 결과물을 메모리에 복원하여 컨텍스트 연속성 보장
 
 ### 2. 진행 상태 표시
 
@@ -87,7 +93,16 @@ restore:
 >
 > **백로그:** {backlog_type} - {backlog_title}
 > **완료된 스텝:** {stepsCompleted}
-> **마지막 작업:** {last_step_description}
+> **마지막 업데이트:** {last_updated}
+> **진행 파일:** `{prepare_file}`
+>
+> **복원된 데이터:**
+> - Step 1: ✅ 기본 정보 (raw_blocks: {raw_blocks_count}개)
+> - Step 2: {step_02_status} 계층 분석
+> - Step 2b: {step_02b_status} 블록 파싱
+> - Step 3: {step_03_status} 요구사항 구조화
+> - Step 4: {step_04_status} 추가 컨텍스트
+> - Step 5: {step_05_status} 컨텍스트 검증
 >
 > ━━━━━━━━━━━━━━━━━━━━━━━"
 
@@ -116,16 +131,19 @@ Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Conti
 
 ## ROUTING:
 
-Based on `stepsCompleted` array, route to appropriate step:
+Based on `stepsCompleted` array in prepare.yaml, route to appropriate step:
 
-| Last Completed     | Next Step File |
-| ------------------ | -------------- |
-| [1]                | {step02File}   |
-| [1, 2]             | {step03File}   |
-| [1, 2, 3]          | {step04File}   |
-| [1, 2, 3, 4]       | {step05File}   |
-| [1, 2, 3, 4, 5]    | {step06File}   |
-| [1, 2, 3, 4, 5, 6] | {step07File}   |
+| Last Completed          | Next Step File  |
+| ----------------------- | --------------- |
+| [1]                     | {step02File}    |
+| [1, 2]                  | {step02bFile}   |
+| [1, 2, 2b]              | {step03File}    |
+| [1, 2, 2b, 3]           | {step04File}    |
+| [1, 2, 2b, 3, 4]        | {step05File}    |
+| [1, 2, 2b, 3, 4, 5]     | {step06File}    |
+| [1, 2, 2b, 3, 4, 5, 6]  | {step07File}    |
+
+**CRITICAL:** 라우팅 전 prepare.yaml의 해당 스텝까지의 모든 데이터가 메모리에 로드되어야 함
 
 ## CRITICAL STEP COMPLETION NOTE
 

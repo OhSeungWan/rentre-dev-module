@@ -12,6 +12,9 @@ prevStepFile: '{workflow_path}/steps/step-05-context-verify.md'
 workflowFile: '{workflow_path}/workflow.md'
 data_path: '{module_path}/data'
 
+# Progress File (컨텍스트 보존용)
+prepare_file: '{data_path}/{backlog_id}/prepare.yaml'
+
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
 partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workflow.md'
@@ -49,11 +52,24 @@ partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workf
 
 ## CONTEXT FROM PREVIOUS STEPS:
 
+**prepare.yaml에서 모든 스텝 결과 로드:**
+
+```yaml
+load_from: '{prepare_file}'
+restore:
+  - step_01 (backlog_id, title, type, notion_id, raw_blocks)
+  - step_02 (hierarchy)
+  - step_02b (content_blocks)
+  - step_03 (requirements, acceptance_criteria)
+  - step_04 (figma, references, unclear_items)
+  - step_05 (context_score, can_decompose)
+```
+
 - `backlog_id`, `title`, `type`, `notion_id` - Step 1
 - `hierarchy` - Step 2
 - `content_blocks` - Step 2b에서 파싱된 블록들 🆕
 - `requirements`, `acceptance_criteria` (with source_blocks) - Step 3 🆕
-- `context_notes` - Step 4
+- `figma`, `references`, `unclear_items` - Step 4
 - `context_score`, `can_decompose` - Step 5
 
 ## YOUR TASK:
@@ -75,12 +91,21 @@ action:
 
 ---
 
-### 2. 저장 폴더 생성
+### 2. prepare.yaml → backlog-info.yaml 통합
 
-**폴더 경로:** `{data_path}/{backlog_id}/`
+**prepare.yaml의 모든 중간 결과를 backlog-info.yaml로 통합:**
 
-```bash
-mkdir -p {data_path}/{backlog_id}
+```yaml
+# prepare.yaml의 step_XX 데이터를 backlog-info.yaml 스키마로 변환
+transform:
+  step_01 → backlog_id, title, type, status, notion_id
+  step_01.raw_blocks → raw.blocks
+  step_02.hierarchy → hierarchy
+  step_02b.content_blocks → content_blocks
+  step_03.requirements → requirements
+  step_03.acceptance_criteria → acceptance_criteria
+  step_04 → context (figma, references, unclear_items)
+  step_05 → preparation (context_score, can_decompose)
 ```
 
 ---
@@ -245,7 +270,7 @@ Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Conti
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5, 6]`, then load, read entire file, then execute {nextStepFile}
+- IF C: Save backlog-info.yaml (merged from {prepare_file}), update {prepare_file} with `stepsCompleted: [1, 2, 2b, 3, 4, 5, 6]`, then load, read entire file, then execute {nextStepFile}
 - IF V: Display saved backlog-info.yaml content, then [Redisplay Menu Options](#5-present-menu-options)
 - IF B: Load {prevStepFile}
 - IF X: End workflow with summary

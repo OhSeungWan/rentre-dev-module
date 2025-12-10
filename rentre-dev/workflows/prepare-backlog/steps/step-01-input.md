@@ -12,6 +12,9 @@ workflowFile: '{workflow_path}/workflow.md'
 continueStepFile: '{workflow_path}/steps/step-01b-continue.md'
 data_path: '{module_path}/data'
 
+# Progress File (컨텍스트 보존용)
+prepare_file: '{data_path}/{backlog_id}/prepare.yaml'
+
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
 partyModeWorkflow: '{project-root}/{bmad_folder}/core/workflows/party-mode/workflow.md'
@@ -188,7 +191,33 @@ raw_blocks:
 
 **CRITICAL:** `raw_blocks`는 다음 스텝(step-02b-block-parsing)에서 `content_blocks`로 변환됩니다.
 
-#### D. 초기화 완료 보고
+#### D. 백로그 폴더 및 prepare.yaml 초기화
+
+**폴더 생성:**
+
+```bash
+mkdir -p {data_path}/{backlog_id}
+```
+
+**prepare.yaml 초기화 저장:**
+
+```yaml
+# {prepare_file}
+# Prepare Backlog Workflow - 진행 상태 및 중간 결과물
+stepsCompleted: [1]
+last_updated: {timestamp}
+
+# Step 1 결과
+step_01:
+  backlog_id: {backlog_id}
+  title: {backlog_title}
+  type: {backlog_type}
+  status: {current_status}
+  notion_id: {notion_page_id}  # if from Notion
+  raw_blocks: {raw_blocks}     # 원본 블록 정보
+```
+
+#### E. 초기화 완료 보고
 
 사용자에게 보고:
 
@@ -199,6 +228,7 @@ raw_blocks:
 > **백로그:** {backlog_type} - {backlog_title}
 > **ID:** {backlog_id}
 > **노션 연동:** {notion_status}
+> **진행 상태 저장:** `{prepare_file}`
 >
 > ━━━━━━━━━━━━━━━━━━━━━━━
 >
@@ -237,7 +267,7 @@ Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Conti
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Update frontmatter `stepsCompleted: [1]`, then load, read entire file, then execute {nextStepFile}
+- IF C: Save to {prepare_file} with `stepsCompleted: [1]`, then load, read entire file, then execute {nextStepFile}
 - IF R: Re-execute from section 3.A (백로그 입력 방식 안내)
 - IF X: End workflow with summary
 - IF Any other comments or queries: help user respond then [Redisplay Menu Options](#4-present-menu-options)
