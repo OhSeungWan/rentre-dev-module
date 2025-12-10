@@ -12,7 +12,7 @@ prevStepFile: '{workflow_path}/steps/step-02b-block-parsing.md' # 🆕 블록 �
 workflowFile: '{workflow_path}/workflow.md'
 
 # Progress File (컨텍스트 보존용)
-prepare_file: '{data_path}/{backlog_id}/prepare.yaml'
+prepare_file: '{data_path}/backlogs/{backlog_id}/prepare.yaml'
 
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'

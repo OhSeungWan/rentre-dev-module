@@ -24,7 +24,7 @@ data_path: '{module_path}/data'
 output_folder: '{data_path}/backlogs'
 
 # Progress File (컨텍스트 보존용)
-prepare_file: '{data_path}/{backlog_id}/prepare.yaml'
+prepare_file: '{data_path}/backlogs/{backlog_id}/prepare.yaml'
 
 # Invocation Configuration
 invocable: true

@@ -13,7 +13,7 @@ workflowFile: '{workflow_path}/workflow.md'
 data_path: '{module_path}/data'
 
 # Progress File (컨텍스트 보존용)
-prepare_file: '{data_path}/{backlog_id}/prepare.yaml'
+prepare_file: '{data_path}/backlogs/{backlog_id}/prepare.yaml'
 
 # Task References
 advancedElicitationTask: '{project-root}/{bmad_folder}/core/tasks/advanced-elicitation.xml'
