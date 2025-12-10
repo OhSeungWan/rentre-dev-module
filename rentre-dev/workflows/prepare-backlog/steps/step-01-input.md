@@ -190,6 +190,7 @@ raw_blocks:
 ```
 
 **CRITICAL:** `raw_blocks`는 다음 스텝(step-02b-block-parsing)에서 `content_blocks`로 변환됩니다.
+**CRITICAL:** `raw_blocks`는 nested block, 다양한 타입의 block 등 의 내용을 포함해 최대한의 원본 내용을 수집합니다.
 
 #### D. 백로그 폴더 및 prepare.yaml 초기화
 
