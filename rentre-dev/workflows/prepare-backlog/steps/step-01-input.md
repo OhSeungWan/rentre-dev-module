@@ -175,7 +175,7 @@ acceptance_criteria_raw: { raw_acceptance_criteria }
 
 # 🆕 Block-based Traceability: 원본 블록 정보 저장
 raw_blocks:
-  - type: 'paragraph' # paragraph | toggle | callout | heading | bulleted_list
+  - type: 'paragraph' # paragraph | toggle | callout | heading | bulleted_list | code 등
     source: 'notion_description'
     content: '...'
   - type: 'toggle'
@@ -190,7 +190,7 @@ raw_blocks:
 ```
 
 **CRITICAL:** `raw_blocks`는 다음 스텝(step-02b-block-parsing)에서 `content_blocks`로 변환됩니다.
-**CRITICAL:** `raw_blocks`는 nested block, 다양한 타입의 block 등 의 내용을 포함해 최대한의 원본 내용을 수집합니다.
+**CRITICAL:** `raw_blocks`는 해당 백로그 노션 문서에 포함된 모든 block, 모든 타입의 block, 모든 하위 block(has_children 이 true 일 경우 중첩된 하위의 모든 블록) 등 최대한의 원본 본문 내용을 수집합니다.
 
 #### D. 백로그 폴더 및 prepare.yaml 초기화
 
