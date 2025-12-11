@@ -138,9 +138,78 @@ inherited_content:
   - block_id: 'BLK-001'
     block_type: 'instruction'
     full_text: |
-      원본 블록 내용 그대로 상속...
+      # ⚠️ CRITICAL: 아래는 예시가 아님!
+      # content_blocks에서 BLK-001의 content 필드를
+      # 한 글자도 변경하지 않고 그대로 복사해야 함!
+```
+
+### 🚨 inherited_content 생성 알고리즘 (CRITICAL - 정보 소실 방지)
+
+**⚠️ 반드시 아래 알고리즘을 따라 full_text를 생성해야 합니다:**
+
+```yaml
+algorithm:
+  # Step 1: 각 하위 백로그의 covers 블록에 대해
+  for each child in children:
+    child.inherited_content = []
+
+    for each cover in child.covers:
+      # Step 2: content_blocks에서 원본 블록 찾기
+      source_block = content_blocks.find(b => b.id == cover.block_id)
+
+      # Step 3: ⚠️ EXACT 복사 (요약/수정/축약 절대 금지!)
+      inherited_item = {
+        block_id: source_block.id,
+        block_type: source_block.type,
+        full_text: source_block.content  # ← 원본 그대로 복사!
+      }
+
+      child.inherited_content.push(inherited_item)
+
+  # ⚠️ CRITICAL RULES:
+  # 1. full_text는 source_block.content를 한 글자도 변경하지 않고 복사
+  # 2. 요약하거나 줄이는 것 금지
+  # 3. "..." 으로 생략하는 것 금지
+  # 4. 원본에 여러 줄이 있으면 여러 줄 그대로 복사
+```
+
+**✅ 올바른 예시:**
+
+```yaml
+# content_blocks에 다음 블록이 있다면:
+content_blocks:
+  - id: 'BLK-001'
+    type: 'instruction'
+    content: |
       - 새롭게 추가되는 구조화 데이터만 작업
-      - 기존 수정은 제외
+      - 기존 구조화 데이터 수정은 제외
+      - JSON-LD 형식 사용
+      - Schema.org 표준 준수
+
+# inherited_content는 반드시 다음과 같아야 함:
+inherited_content:
+  - block_id: 'BLK-001'
+    block_type: 'instruction'
+    full_text: |
+      - 새롭게 추가되는 구조화 데이터만 작업
+      - 기존 구조화 데이터 수정은 제외
+      - JSON-LD 형식 사용
+      - Schema.org 표준 준수
+```
+
+**❌ 잘못된 예시 (절대 금지):**
+
+```yaml
+# ❌ 요약함
+full_text: "구조화 데이터 작업 지침..."
+
+# ❌ 일부만 복사
+full_text: "- 새롭게 추가되는 구조화 데이터만 작업"
+
+# ❌ 생략함
+full_text: |
+  - 새롭게 추가되는 구조화 데이터만 작업
+  ... (이하 생략)
 ```
 
 **📌 추적성 정보:**

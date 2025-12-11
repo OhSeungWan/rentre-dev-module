@@ -112,6 +112,74 @@ for each AC-XXX in acceptance_criteria:
   if not: add to unmapped_criteria
 ```
 
+### 1b. 🚨 inherited_content 완전성 검증 (CRITICAL - 정보 소실 방지)
+
+**모든 하위 백로그의 inherited_content가 원본을 완전히 포함하는지 검증:**
+
+```yaml
+# inherited_content 검증 알고리즘
+inherited_content_errors = []
+
+for each child in children:
+  for each inherited in child.inherited_content:
+    # 1. 원본 블록 찾기
+    source_block = content_blocks.find(b => b.id == inherited.block_id)
+
+    # 2. full_text 완전성 검증
+    if inherited.full_text != source_block.content:
+      # ⚠️ 내용이 다름 - 정보 소실 발생!
+      inherited_content_errors.push({
+        child_id: child.id,
+        block_id: inherited.block_id,
+        issue: "content_mismatch",
+        original_length: source_block.content.length,
+        inherited_length: inherited.full_text.length,
+        original_preview: source_block.content.substring(0, 100),
+        inherited_preview: inherited.full_text.substring(0, 100)
+      })
+
+    # 3. 길이 검증 (요약 감지)
+    if inherited.full_text.length < source_block.content.length * 0.9:
+      # ⚠️ 90% 미만이면 요약되었을 가능성 높음
+      inherited_content_errors.push({
+        child_id: child.id,
+        block_id: inherited.block_id,
+        issue: "possible_truncation",
+        original_length: source_block.content.length,
+        inherited_length: inherited.full_text.length
+      })
+
+# 검증 결과
+inherited_content_valid = (inherited_content_errors.length == 0)
+```
+
+**inherited_content 검증 결과 표시:**
+
+**검증 통과 시:**
+
+> "**✅ inherited_content 완전성 검증 통과!**
+>
+> 모든 하위 백로그의 inherited_content가 원본 블록의 내용을 완전히 포함합니다.
+>
+> | 하위 백로그 | 상속 블록 수 | 총 문자 수 | 상태 |
+> |------------|--------------|-----------|------|
+> | {child_1}  | {count}개    | {chars}자 | ✅   |
+> | {child_2}  | {count}개    | {chars}자 | ✅   |"
+
+**검증 실패 시:**
+
+> "**❌ inherited_content 정보 소실 감지!**
+>
+> ⚠️ 일부 하위 백로그의 inherited_content가 원본과 다릅니다.
+> 이대로 진행하면 원본 지시사항이 Dev 에이전트에게 제대로 전달되지 않습니다!
+>
+> | 하위 백로그 | 블록 ID | 문제           | 원본 길이 | 상속 길이 |
+> |------------|---------|---------------|----------|----------|
+> | {child_id} | BLK-XXX | 내용 불일치    | {orig}자 | {inh}자  |
+> | {child_id} | BLK-YYY | 요약/축약 의심 | {orig}자 | {inh}자  |
+>
+> **🔧 수정 필요:** [F] Fix 선택하여 inherited_content 재생성"
+
 ### 2. 검증 결과 표시
 
 **모든 항목이 매핑된 경우:**
@@ -121,6 +189,7 @@ for each AC-XXX in acceptance_criteria:
 > ━━━━━━━━━━━━━━━━━━━━━━━
 >
 > **🆕 📦 블록 커버리지:** {covered_block_count}/{total_block_count} (100%) ✅
+> **🆕 📝 inherited_content 완전성:** {valid_count}/{total_count} (100%) ✅
 > **요구사항 커버리지:** {req_count}/{req_count} (100%)
 > **수용 기준 커버리지:** {ac_count}/{ac_count} (100%)
 >
@@ -252,6 +321,18 @@ verification:
     percent: 100
     uncovered: []
     shared: ["BLK-004"]
+  # 🆕 inherited_content 완전성 검증 결과
+  inherited_content_validation:
+    total_items: 8           # 총 상속 항목 수
+    valid_items: 8           # 완전히 복사된 항목 수
+    percent: 100
+    errors: []               # 오류 목록 (있는 경우)
+    # 오류 예시:
+    # - child_id: "TASK-001"
+    #   block_id: "BLK-001"
+    #   issue: "content_mismatch"
+    #   original_length: 500
+    #   inherited_length: 120
   requirements_coverage:
     total: 3
     covered: 3
@@ -260,7 +341,7 @@ verification:
     total: 4
     covered: 4
     percent: 100
-  passed: true
+  passed: true              # block_coverage AND inherited_content_validation 모두 통과해야 true
   excluded_items: []
 ```
 
@@ -301,6 +382,8 @@ ONLY WHEN [C continue option] is selected and [사용자 최종 승인 획득], 
 
 ### ✅ SUCCESS:
 
+- 모든 블록 커버리지 확인 (100%)
+- 🆕 모든 inherited_content 완전성 검증 통과
 - 모든 요구사항 커버리지 확인
 - 모든 수용 기준 커버리지 확인
 - 누락 항목 처리 완료
@@ -311,6 +394,8 @@ ONLY WHEN [C continue option] is selected and [사용자 최종 승인 획득], 
 
 - 누락된 항목 무시하고 진행
 - 커버리지 계산 오류
+- 🆕 inherited_content 불완전 (요약/축약됨)한 상태로 진행
+- 🆕 inherited_content 검증 스킵
 - 사용자 승인 없이 진행
 - Proceeding without user input/selection
 
