@@ -1,0 +1,57 @@
+# Context Template for Dev Backlog Workflow
+# This file stores collected context for a subtask implementation
+# Location: {data_path}/{backlog_id}/subtasks/{subtask_id}/context.yaml
+
+# Subtask Identification
+subtask_id: ""
+subtask_title: ""
+collected_at: ""
+
+# Collected Context
+context:
+  # Inherited Original Instructions (Block-based Traceability)
+  inherited_content:
+    exists: false
+    blocks: []
+    # - block_id: ""
+    #   block_type: ""
+    #   full_text: ""
+    constraints: []
+    # - "constraint text here"
+
+  # Code Analysis Results
+  code_analysis:
+    exists: false
+    source: ""  # "file" | "serena_mcp"
+    matched_files: []
+    # - path: ""
+    #   relevance: ""
+    implementation_notes: ""
+    existing_patterns: []
+    # - pattern_name: ""
+    #   description: ""
+
+  # Figma Design Specs
+  figma:
+    exists: false
+    url: ""
+    specs:
+      colors: []
+      dimensions: {}
+      spacing: {}
+
+  # API/Library Documentation
+  api_docs:
+    exists: false
+    libraries: []
+    # - name: ""
+    #   version: ""
+    #   docs_summary: ""
+    summary: ""
+
+# Context Status Summary
+status_summary:
+  inherited_content: "ℹ️ 없음"
+  code_analysis: "ℹ️ 없음"
+  figma: "ℹ️ 불필요"
+  api_docs: "ℹ️ 불필요"

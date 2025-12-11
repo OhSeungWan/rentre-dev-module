@@ -17,6 +17,9 @@ session_state_file: '{data_path}/{backlog_id}/session-state.yaml'
 # 🆕 Progress Tracking
 progress_file: '{data_path}/{backlog_id}/subtasks/{current_subtask_id}/progress.yaml'
 progress_template: '{workflow_path}/templates/progress.yaml'
+
+# 🆕 Context Reference (from Step 3)
+context_file: '{data_path}/{backlog_id}/subtasks/{current_subtask_id}/context.yaml'
 ---
 
 # Step 4: 구현 + 테스트
@@ -112,7 +115,32 @@ save_reason: "step_started"
 **🆕 새 구현 시작**
 </check>
 
-### 0b. Auto-Save Protocol
+### 0b. Load Context from Step 3
+
+<check if="context_file exists">
+<action>Load {context_file} for implementation reference</action>
+
+**📋 Step 3에서 수집된 컨텍스트:**
+
+| 항목 | 상태 |
+|------|------|
+| 상속된 지시사항 | {context.status_summary.inherited_content} |
+| 코드 분석 | {context.status_summary.code_analysis} |
+| Figma 스펙 | {context.status_summary.figma} |
+| API 문서 | {context.status_summary.api_docs} |
+
+<check if="context.inherited_content.exists">
+**⚠️ 원본 지시사항 제약조건:**
+{context.inherited_content.constraints}
+</check>
+
+</check>
+
+<check if="context_file not exists">
+**⚠️ Step 3 컨텍스트 파일 없음** - 서브태스크 파일에서 직접 컨텍스트 참조
+</check>
+
+### 0c. Auto-Save Protocol
 
 **🔄 자동 저장 트리거:**
 

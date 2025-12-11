@@ -13,6 +13,10 @@ workflowFile: '{workflow_path}/workflow.yaml'
 # Data References
 data_path: '{project-root}/.bmad/rentre-dev/data/backlogs'
 session_state_file: '{data_path}/{backlog_id}/session-state.yaml'
+
+# 🆕 Context Storage
+context_file: '{data_path}/{backlog_id}/subtasks/{current_subtask_id}/context.yaml'
+context_template: '{workflow_path}/templates/context.yaml'
 ---
 
 # Step 3: 컨텍스트 준비
@@ -198,8 +202,39 @@ Display: **컨텍스트 확인 완료.** [C] 구현 시작 | [I] 🆕 상속된 
 #### Menu Handling Logic:
 
 - IF C:
-  1. 🆕 Update {session_state_file}: `stepsCompleted: [1, 2, 3]`
-  2. Load {nextStepFile} to start implementation
+  1. 🆕 **Save collected context to {context_file}:**
+     ```yaml
+     subtask_id: "{current_subtask_id}"
+     subtask_title: "{current_subtask_title}"
+     collected_at: "{timestamp}"
+     context:
+       inherited_content:
+         exists: {true|false}
+         blocks: [{collected_blocks}]
+         constraints: [{collected_constraints}]
+       code_analysis:
+         exists: {true|false}
+         source: "{file|serena_mcp}"
+         matched_files: [{matched_files}]
+         implementation_notes: "{notes}"
+         existing_patterns: [{patterns}]
+       figma:
+         exists: {true|false}
+         url: "{figma_url}"
+         specs: {collected_specs}
+       api_docs:
+         exists: {true|false}
+         libraries: [{libraries}]
+         summary: "{summary}"
+     status_summary:
+       inherited_content: "{inherited_content_status}"
+       code_analysis: "{code_analysis_status}"
+       figma: "{figma_status}"
+       api_docs: "{api_docs_status}"
+     ```
+  2. Update {session_state_file}: `stepsCompleted: [1, 2, 3]`
+  3. Display: "✅ 컨텍스트가 저장되었습니다: {context_file}"
+  4. Load {nextStepFile} to start implementation
 - IF I: 🆕 상속된 원본 지시사항 전체 표시 후 메뉴 재표시
 - IF F: Figma 디자인 상세 표시 후 메뉴 재표시
 - IF A: 코드 분석 전체 표시 후 메뉴 재표시
@@ -208,7 +243,10 @@ Display: **컨텍스트 확인 완료.** [C] 구현 시작 | [I] 🆕 상속된 
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected will you load {nextStepFile} to begin implementation.
+ONLY WHEN C is selected will you:
+1. Save collected context to {context_file}
+2. Update {session_state_file}
+3. Load {nextStepFile} to begin implementation.
 
 ---
 
@@ -219,6 +257,7 @@ ONLY WHEN C is selected will you load {nextStepFile} to begin implementation.
 - 서브태스크 상세 표시됨
 - 관련 컨텍스트 수집됨
 - MCP 도구 적절히 활용됨
+- 🆕 수집된 컨텍스트가 {context_file}에 저장됨
 - 사용자 확인 후 구현 진행
 
 ### ❌ SYSTEM FAILURE:
@@ -226,5 +265,6 @@ ONLY WHEN C is selected will you load {nextStepFile} to begin implementation.
 - 컨텍스트 없이 구현 시작
 - MCP 도구 사용 가능한데 미사용
 - 사용자 확인 없이 진행
+- 🆕 컨텍스트 저장 없이 다음 스텝 진행
 
 **Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
