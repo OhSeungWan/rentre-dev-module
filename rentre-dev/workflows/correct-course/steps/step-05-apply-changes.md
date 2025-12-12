@@ -169,13 +169,34 @@ coverage:
 
 ---
 
-## OUTPUT FILES
+## INPUT/OUTPUT FILES
 
-이 스텝에서 수정/생성:
+### 이전 스텝 결과 로드
+
+스텝 시작 시:
+
+- `{session_path}/step-02-change.yaml` → change_type, change_description, change_reason
+- `{session_path}/step-04-impact.yaml` → affected_*, impact_severity, coverage_change
+
+### 이 스텝에서 수정/생성
 
 - `{backlog_path}/backlog-info.yaml` (수정)
 - `{backlog_path}/change-history.yaml` (추가)
 - `{backlog_path}/subtasks/*.yaml` (추가/수정)
+
+### 세션 완료 처리
+
+변경 적용 완료 시:
+
+1. `session-state.yaml` 업데이트:
+   ```yaml
+   stepsCompleted: [1, 2, 3, 4, 5]
+   last_updated: {timestamp}
+   status: completed
+   completed_at: {timestamp}
+   change_id: "CHG-{id}"
+   ```
+2. 세션 폴더는 이력 보존을 위해 유지 (삭제하지 않음)
 
 ---
 

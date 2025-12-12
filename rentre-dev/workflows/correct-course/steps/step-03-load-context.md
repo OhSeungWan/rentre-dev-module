@@ -125,13 +125,43 @@ nextStepFile: '{workflow_path}/steps/step-04-analyze-impact.md'
 
 ## CONTEXT VARIABLES
 
-이 스텝에서 로드:
+### 이전 스텝 결과 로드
+
+스텝 시작 시 `{session_path}/step-02-change.yaml` 로드:
+
+- `change_type`, `change_description`, `change_reason`, `change_topic`
+
+### 이 스텝에서 로드
 
 - `backlog_info`: 전체 backlog-info.yaml 내용
 - `content_blocks`: BLK-XXX 블록 목록
 - `requirements`: REQ-XXX 요구사항 목록
 - `subtasks`: 서브태스크 목록
 - `code_analysis`: 코드 분석 결과 (있는 경우)
+
+### 스텝 완료 시 저장
+
+1. `{session_path}/step-03-context.yaml` 저장:
+   ```yaml
+   backlog_title: "{title}"
+   backlog_status: "{status}"
+   content_blocks_count: {count}
+   content_blocks_summary:
+     - id: BLK-001
+       type: "{type}"
+       preview: "{preview}"
+   requirements_count: {count}
+   requirements_summary:
+     - id: REQ-001
+       summary: "{summary}"
+   subtasks_count: {count}
+   coverage_percent: {percent}
+   ```
+2. `session-state.yaml` 업데이트:
+   ```yaml
+   stepsCompleted: [1, 2, 3]
+   last_updated: {timestamp}
+   ```
 
 ---
 

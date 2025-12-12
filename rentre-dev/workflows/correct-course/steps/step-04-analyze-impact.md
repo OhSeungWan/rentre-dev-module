@@ -137,7 +137,14 @@ advancedElicitationTask: '{project-root}/.bmad/core/tasks/advanced-elicitation.x
 
 ## ANALYSIS VARIABLES
 
-이 스텝에서 생성:
+### 이전 스텝 결과 로드
+
+스텝 시작 시:
+
+- `{session_path}/step-02-change.yaml` → change_type, change_description
+- `{session_path}/step-03-context.yaml` → backlog 컨텍스트 요약
+
+### 이 스텝에서 생성
 
 - `affected_blocks`: 영향받는 블록 목록
 - `affected_requirements`: 영향받는 요구사항 목록
@@ -145,6 +152,34 @@ advancedElicitationTask: '{project-root}/.bmad/core/tasks/advanced-elicitation.x
 - `new_subtasks_proposed`: 제안된 새 서브태스크
 - `impact_severity`: 영향 심각도
 - `coverage_change`: 커버리지 변화 예상
+
+### 스텝 완료 시 저장
+
+1. `{session_path}/step-04-impact.yaml` 저장:
+   ```yaml
+   affected_blocks:
+     - id: BLK-001
+       impact: "{description}"
+   affected_requirements:
+     - id: REQ-001
+       current: "{current}"
+       proposed: "{proposed}"
+   affected_subtasks:
+     - id: "{subtask_id}"
+       action: "modify|add|remove"
+   new_subtasks_proposed:
+     - description: "{description}"
+       covers: [BLK-XXX]
+   impact_severity: "low|medium|high"
+   coverage_change:
+     before: {percent}
+     after: {percent}
+   ```
+2. `session-state.yaml` 업데이트:
+   ```yaml
+   stepsCompleted: [1, 2, 3, 4]
+   last_updated: {timestamp}
+   ```
 
 ---
 

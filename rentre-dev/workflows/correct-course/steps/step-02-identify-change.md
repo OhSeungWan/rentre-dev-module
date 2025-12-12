@@ -124,6 +124,45 @@ nextStepFile: '{workflow_path}/steps/step-03-load-context.md'
 - `change_type`: 변경 유형 코드
 - `change_description`: 변경 설명
 - `change_reason`: 변경 이유
+- `change_topic`: 변경 주제 슬러그 (자동 생성)
+
+### change_topic 생성 규칙
+
+변경 유형과 설명을 기반으로 자동 생성:
+
+- 형식: `{type_prefix}-{description_slug}`
+- type_prefix 매핑:
+  - R (요구사항 변경) → `req`
+  - S (서브태스크) → `subtask`
+  - P (우선순위) → `priority`
+  - K (리스크) → `risk`
+  - O (범위 변경) → `scope`
+  - M (복합) → `multi`
+- 예시:
+  - 요구사항 변경 + "인증 흐름 수정" → `req-auth-flow`
+  - 서브태스크 추가 + "API 엔드포인트" → `subtask-api-endpoint`
+  - 리스크 식별 + "성능 병목" → `risk-perf-bottleneck`
+
+### 세션 폴더 및 파일 생성
+
+스텝 완료 시 (Continue 선택 시):
+
+1. `{backlog_path}/correct-course/{change_topic}/` 폴더 생성
+2. `session-state.yaml` 생성:
+   ```yaml
+   change_topic: "{change_topic}"
+   stepsCompleted: [1, 2]
+   created_at: {timestamp}
+   last_updated: {timestamp}
+   status: in_progress
+   ```
+3. `step-02-change.yaml` 저장:
+   ```yaml
+   change_type: "{change_type}"
+   change_description: "{change_description}"
+   change_reason: "{change_reason}"
+   change_topic: "{change_topic}"
+   ```
 
 ---
 

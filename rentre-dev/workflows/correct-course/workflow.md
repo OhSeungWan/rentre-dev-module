@@ -11,6 +11,10 @@ installed_path: '{project-root}/.bmad/rentre-dev/workflows/correct-course'
 module_path: '{project-root}/.bmad/rentre-dev'
 data_path: '{module_path}/data/backlogs'
 
+# Session Path (런타임에 설정)
+# backlog_path: '{data_path}/{backlog_id}'
+# session_path: '{backlog_path}/correct-course/{change_topic}'
+
 # Steps
 steps:
   - step-01-init
